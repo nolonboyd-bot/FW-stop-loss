@@ -132,6 +132,153 @@
     .empty-log { padding: 30px 20px; text-align: center; font-size: 10px; color: #c5cdd8; letter-spacing: 2px; text-transform: uppercase; }
     .danger-banner { background: #fff0f3; border: 1px solid #e03a5233; border-radius: 8px; padding: 12px 16px; margin-bottom: 12px; font-size: 10px; color: #e03a52; letter-spacing: 1px; }
     .green { color: #00b85c; } .red { color: #e03a52; } .white { color: #1a2332; }
+
+    /* ── MONEY MACHINE GRAPHICS ── */
+    @keyframes roll { 0%{transform:translateY(0)} 100%{transform:translateY(-40px)} }
+    @keyframes printOut { 0%{transform:translateY(-100%) scaleY(0);opacity:0} 60%{opacity:1} 100%{transform:translateY(60px) scaleY(1);opacity:0} }
+    @keyframes coinSpin { 0%{transform:rotateY(0deg)} 100%{transform:rotateY(360deg)} }
+    @keyframes floatUp { 0%{transform:translateY(0) rotate(-10deg);opacity:1} 100%{transform:translateY(-120px) rotate(15deg);opacity:0} }
+    @keyframes floatUpR { 0%{transform:translateY(0) rotate(8deg);opacity:1} 100%{transform:translateY(-100px) rotate(-12deg);opacity:0} }
+    @keyframes ticker { 0%{transform:translateX(100%)} 100%{transform:translateX(-100%)} }
+    @keyframes pulse-green { 0%,100%{box-shadow:0 0 0 0 #00b85c44} 50%{box-shadow:0 0 0 8px #00b85c00} }
+    @keyframes gear-spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+    @keyframes gear-spin-rev { from{transform:rotate(0deg)} to{transform:rotate(-360deg)} }
+    @keyframes bill-slide { 0%{transform:translateX(-110%) skewX(-2deg);opacity:0} 20%{opacity:1} 80%{opacity:1} 100%{transform:translateX(110%) skewX(2deg);opacity:0} }
+    @keyframes shimmer { 0%{background-position:-200% 0} 100%{background-position:200% 0} }
+    @keyframes bounce-coin { 0%,100%{transform:translateY(0) scale(1)} 40%{transform:translateY(-8px) scale(1.1)} 60%{transform:translateY(-4px) scale(1.05)} }
+    @keyframes win-flash { 0%{background:#f0faf5} 30%{background:#c8f5dc} 100%{background:#f0faf5} }
+    @keyframes loss-flash { 0%{background:#fff} 30%{background:#fff0f3} 100%{background:#fff} }
+    @keyframes stack-in { 0%{transform:translateY(20px) scale(0.8);opacity:0} 100%{transform:translateY(0) scale(1);opacity:1} }
+
+    .money-machine-wrap {
+      position: relative;
+      overflow: hidden;
+      background: linear-gradient(135deg, #0a1628 0%, #0d1f3c 50%, #091420 100%);
+      border-bottom: 2px solid #00b85c44;
+      padding: 16px 20px 12px;
+    }
+    .ticker-tape {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 18px;
+      background: #00b85c;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+    }
+    .ticker-text {
+      white-space: nowrap;
+      font-family: 'DM Mono', monospace;
+      font-size: 8px;
+      letter-spacing: 2px;
+      color: #fff;
+      animation: ticker 18s linear infinite;
+      padding-right: 60px;
+    }
+    .machine-body {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: relative;
+      z-index: 2;
+    }
+    .machine-left { display:flex; align-items:center; gap:14px; }
+    .machine-title { color:#fff; }
+    .machine-title .main { font-family:'Bebas Neue',sans-serif; font-size:22px; letter-spacing:6px; color:#00b85c; line-height:1; }
+    .machine-title .sub { font-size:8px; letter-spacing:3px; color:#4a6a8a; margin-top:2px; text-transform:uppercase; }
+
+    .gear-group { position:relative; width:48px; height:48px; }
+    .gear-big { position:absolute; top:0; left:0; animation: gear-spin 4s linear infinite; transform-origin:center; }
+    .gear-sm { position:absolute; bottom:0; right:0; animation: gear-spin-rev 2.5s linear infinite; transform-origin:center; }
+
+    .bill-machine {
+      position: relative;
+      width: 90px;
+      height: 52px;
+      background: linear-gradient(180deg, #1a2d4a 0%, #0f1e35 100%);
+      border: 1px solid #2a4060;
+      border-radius: 6px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .bill-slot {
+      position: absolute;
+      bottom: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 60px;
+      height: 4px;
+      background: #0a1020;
+      border-radius: 2px;
+      box-shadow: inset 0 1px 3px #000;
+    }
+    .bill-out {
+      position: absolute;
+      bottom: 4px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 52px;
+      height: 22px;
+      background: linear-gradient(135deg, #1a6b3a, #00b85c, #1a6b3a);
+      border-radius: 2px;
+      border: 1px solid #00b85c88;
+      animation: printOut 2.4s ease-in-out infinite;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 10px;
+      color: #fff;
+      letter-spacing: 1px;
+    }
+    .machine-lights {
+      display: flex;
+      gap: 4px;
+      position: absolute;
+      top: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+    .mlight {
+      width: 5px; height: 5px;
+      border-radius: 50%;
+    }
+    .mlight.g { background:#00b85c; box-shadow:0 0 6px #00b85c; animation: pulse-green 1.2s ease-in-out infinite; }
+    .mlight.y { background:#f0a500; box-shadow:0 0 6px #f0a500; animation: pulse-green 1.2s ease-in-out infinite 0.4s; }
+    .mlight.r { background:#e03a52; box-shadow:0 0 6px #e03a52; animation: pulse-green 1.2s ease-in-out infinite 0.8s; }
+
+    .float-coins {
+      position: absolute;
+      right: 20px; top: 4px;
+      display: flex;
+      gap: 8px;
+      z-index: 1;
+    }
+    .fcoin {
+      font-size: 16px;
+      opacity: 0.5;
+    }
+    .fcoin:nth-child(1) { animation: floatUp 3s ease-in infinite; }
+    .fcoin:nth-child(2) { animation: floatUp 3s ease-in infinite 1s; }
+    .fcoin:nth-child(3) { animation: floatUpR 3s ease-in infinite 0.5s; }
+    .fcoin:nth-child(4) { animation: floatUp 3s ease-in infinite 1.8s; }
+
+    .win-row-anim { animation: win-flash 1s ease forwards; }
+    .loss-row-anim { animation: loss-flash 1s ease forwards; }
+
+    .shimmer-btn {
+      background: linear-gradient(90deg, #00b85c 0%, #00d96a 40%, #00b85c 60%, #009e4f 100%);
+      background-size: 200% 100%;
+      animation: shimmer 2.5s linear infinite;
+    }
+    .payout-shimmer {
+      background: linear-gradient(90deg, #d4930a 0%, #f0c040 40%, #f0a500 60%, #d4930a 100%);
+      background-size: 200% 100%;
+      animation: shimmer 2.5s linear infinite;
+    }
+    .stack-in { animation: stack-in 0.35s cubic-bezier(0.34,1.56,0.64,1) forwards; }
   </style>
 </head>
 <body>
@@ -151,6 +298,76 @@ const INSTRUMENTS = {
   MGC: { name: 'MGC', label: 'Micro Gold',   tickValue: 1.00, tickSize: 0.10, defaultTicks: 25 },
 };
 
+function GearSVG({size, color}) {
+  const r = size/2, teeth = 8, ir = r*0.55, tr = r*0.85, tw = 0.28;
+  let d = '';
+  for(let i=0;i<teeth;i++){
+    const a0=(i*2*Math.PI/teeth)-Math.PI/teeth;
+    const a1=a0+tw; const a2=a0+Math.PI/teeth-tw; const a3=a0+Math.PI/teeth;
+    d+=`L${r+tr*Math.cos(a0)} ${r+tr*Math.sin(a0)} L${r+tr*Math.cos(a1)} ${r+tr*Math.sin(a1)} `;
+    d+=`L${r+r*Math.cos(a2)} ${r+r*Math.sin(a2)} L${r+r*Math.cos(a3)} ${r+r*Math.sin(a3)} `;
+  }
+  return (
+    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+      <path d={`M${r+tr} ${r} ${d}Z`} fill={color} opacity="0.9"/>
+      <circle cx={r} cy={r} r={ir} fill="#0a1628"/>
+      <circle cx={r} cy={r} r={ir*0.4} fill={color} opacity="0.6"/>
+    </svg>
+  );
+}
+
+function MoneyMachineHeader() {
+  return (
+    <div className="money-machine-wrap">
+      <div className="float-coins">
+        <span className="fcoin">💵</span>
+        <span className="fcoin">🪙</span>
+        <span className="fcoin">💰</span>
+        <span className="fcoin">💵</span>
+      </div>
+      <div className="machine-body">
+        <div className="machine-left">
+          <div className="gear-group">
+            <div className="gear-big"><GearSVG size={32} color="#00b85c"/></div>
+            <div className="gear-sm" style={{bottom:-2,right:-2}}><GearSVG size={20} color="#f0a500"/></div>
+          </div>
+          <div className="bill-machine">
+            <div className="machine-lights">
+              <div className="mlight g"/><div className="mlight y"/><div className="mlight r"/>
+            </div>
+            <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:'9px',letterSpacing:'2px',color:'#4a6a8a',marginTop:'6px'}}>$$</div>
+            <div className="bill-slot"/>
+            <div className="bill-out">$$$</div>
+          </div>
+        </div>
+        <div className="machine-title" style={{textAlign:'center',flex:1}}>
+          <div className="main">FW WALKAWAY</div>
+          <div className="sub">Prop Tracker · Money Machine</div>
+        </div>
+        <div className="machine-left" style={{flexDirection:'row-reverse'}}>
+          <div className="gear-group">
+            <div className="gear-big"><GearSVG size={32} color="#00b85c"/></div>
+            <div className="gear-sm" style={{bottom:-2,left:-2,right:'auto'}}><GearSVG size={20} color="#f0a500"/></div>
+          </div>
+          <div className="bill-machine">
+            <div className="machine-lights">
+              <div className="mlight r"/><div className="mlight y"/><div className="mlight g"/>
+            </div>
+            <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:'9px',letterSpacing:'2px',color:'#4a6a8a',marginTop:'6px'}}>$$</div>
+            <div className="bill-slot"/>
+            <div className="bill-out" style={{animationDelay:'1.2s'}}>$$$</div>
+          </div>
+        </div>
+      </div>
+      <div className="ticker-tape">
+        <div className="ticker-text">
+          📈 MNQ · MGC · MICRO FUTURES · PROP TRADING · FW WALKAWAY · RISK MANAGED · STAY DISCIPLINED · PROTECT THE POOL · LET IT PRINT · 📈 MNQ · MGC · MICRO FUTURES · PROP TRADING · FW WALKAWAY · RISK MANAGED · STAY DISCIPLINED · PROTECT THE POOL · LET IT PRINT ·&nbsp;
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function TrackerPage() {
   const [trades, setTrades] = useState([]);
   const [form, setForm] = useState({ label: '', pnl: '', outcome: 'win' });
@@ -160,6 +377,7 @@ function TrackerPage() {
   const [payouts, setPayouts] = useState([]);
   const [payoutForm, setPayoutForm] = useState({ label: '', amount: '' });
   const [showPayouts, setShowPayouts] = useState(false);
+  const [lastAdded, setLastAdded] = useState(null);
 
   const inst = INSTRUMENTS[instrument];
   const startingDrawdown = parseFloat(drawdown) || 2500;
@@ -168,7 +386,7 @@ function TrackerPage() {
   const stats = useMemo(() => {
     const totalPnl = trades.reduce((s, t) => s + t.pnl, 0);
     const totalPayoutsAmt = payouts.reduce((s, p) => s + p.amount, 0);
-    const currentPool = Math.max(0, startingDrawdown + totalPnl);
+    const currentPool = Math.max(0, startingDrawdown + totalPnl - totalPayoutsAmt);
     const riskPerTrade = currentPool / DIVISOR;
     const poolPct = Math.min(100, Math.max(0, ((startingDrawdown + totalPnl) / startingDrawdown) * 100));
     const wins = trades.filter(t => t.pnl > 0).length;
@@ -204,13 +422,16 @@ function TrackerPage() {
     const pnlVal = parseFloat(form.pnl);
     if (!form.pnl || isNaN(pnlVal)) return;
     const finalPnl = form.outcome === 'win' ? Math.abs(pnlVal) : -Math.abs(pnlVal);
+    const newId = Date.now();
     setTrades(prev => [{
-      id: Date.now(),
+      id: newId,
       label: form.label || `Trade ${prev.length + 1}`,
       pnl: finalPnl,
       instrument,
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     }, ...prev]);
+    setLastAdded(newId);
+    setTimeout(() => setLastAdded(null), 1000);
     setForm({ label: '', pnl: '', outcome: 'win' });
   };
 
@@ -301,16 +522,19 @@ function TrackerPage() {
 
         {/* Metrics */}
         <div className="metric">
+          <div style={{fontSize:'20px', marginBottom:'4px'}}>📊</div>
           <div className={`metric-val ${stats.totalPnl >= 0 ? 'green' : 'red'}`}>
             {stats.totalPnl >= 0 ? '+' : ''}{stats.totalPnl.toFixed(0)}
           </div>
           <div className="metric-label">Total P&L</div>
         </div>
         <div className="metric">
+          <div style={{fontSize:'20px', marginBottom:'4px'}}>🎯</div>
           <div className="metric-val white">{stats.winRate}%</div>
           <div className="metric-label">Win Rate</div>
         </div>
         <div className="metric">
+          <div style={{fontSize:'20px', marginBottom:'4px'}}>⚡</div>
           <div className="metric-val white">{trades.length}</div>
           <div className="metric-label">Trades</div>
         </div>
@@ -319,13 +543,18 @@ function TrackerPage() {
         <div className="risk-box" style={{marginBottom:0}}>
           <div>
             <div className="risk-label">Max Risk / Trade</div>
-            <div className="risk-amount">${stats.riskPerTrade.toFixed(0)}</div>
+            <div style={{display:'flex', alignItems:'center', gap:'8px'}}>
+              <span style={{fontSize:'28px'}}>💰</span>
+              <div className="risk-amount">${stats.riskPerTrade.toFixed(0)}</div>
+            </div>
             <div className="risk-formula">${stats.currentPool.toFixed(0)} pool ÷ {DIVISOR}</div>
           </div>
           <div style={{textAlign:'right'}}>
             <div className="risk-pool-label">Current Pool</div>
             <div className="risk-pool-val">${stats.currentPool.toFixed(2)}</div>
             <div style={{fontSize:'9px',color:'#9aa5b4',marginTop:4}}>{stats.wins}W · {stats.losses}L</div>
+            {stats.wins > 0 && stats.losses === 0 && <div style={{fontSize:'9px',color:'#f0a500',marginTop:4,letterSpacing:'1px'}}>🔥 PERFECT SESSION</div>}
+            {stats.wins >= 3 && stats.wins > stats.losses * 2 && <div style={{fontSize:'9px',color:'#00b85c',marginTop:4,letterSpacing:'1px'}}>📈 ON FIRE</div>}
           </div>
         </div>
 
@@ -385,7 +614,7 @@ function TrackerPage() {
                     onKeyDown={e => e.key === 'Enter' && addTrade()} />
                 </div>
               </div>
-              <button className="add-btn" style={{padding:'14px', fontSize:'17px'}} onClick={addTrade}>+ LOG TRADE</button>
+              <button className="add-btn shimmer-btn" style={{padding:'14px', fontSize:'17px'}} onClick={addTrade}>+ LOG TRADE</button>
             </div>
 
             {/* Trade Journal */}
@@ -397,7 +626,7 @@ function TrackerPage() {
               {trades.length === 0 ? (
                 <div style={{padding:'36px 20px', textAlign:'center', fontSize:'11px', color:'#c5cdd8', letterSpacing:'2px', textTransform:'uppercase'}}>No trades yet</div>
               ) : trades.map((t, i) => (
-                <div key={t.id} style={{display:'grid', gridTemplateColumns:'32px 1fr auto auto', gap:'12px', alignItems:'center', padding:'14px 20px', borderBottom: i < trades.length - 1 ? '1px solid #eef0f3' : 'none'}}>
+                <div key={t.id} className={lastAdded === t.id ? (t.pnl >= 0 ? 'win-row-anim' : 'loss-row-anim') : ''} style={{display:'grid', gridTemplateColumns:'32px 1fr auto auto', gap:'12px', alignItems:'center', padding:'14px 20px', borderBottom: i < trades.length - 1 ? '1px solid #eef0f3' : 'none', borderRadius: lastAdded === t.id ? '6px' : '0', transition:'background 0.3s'}}>
                   <div style={{fontSize:'10px', color:'#9aa5b4', textAlign:'center'}}>{trades.length - i}</div>
                   <div>
                     <div style={{fontSize:'14px', color:'#1a2332', marginBottom:'3px'}}>{t.label}</div>
@@ -463,7 +692,7 @@ function TrackerPage() {
                           onKeyDown={e => e.key === 'Enter' && addPayout()} />
                       </div>
                     </div>
-                    <button className="add-btn" style={{padding:'14px', fontSize:'17px', background:'#f0a500'}} onClick={addPayout}>+ LOG PAYOUT</button>
+                    <button className="add-btn payout-shimmer" style={{padding:'14px', fontSize:'17px', background:'none'}} onClick={addPayout}>+ LOG PAYOUT</button>
                   </div>
                   {payouts.length === 0 ? (
                     <div style={{padding:'20px 0 4px', textAlign:'center', fontSize:'11px', color:'#c5cdd8', letterSpacing:'2px', textTransform:'uppercase'}}>No payouts logged yet</div>
@@ -507,15 +736,7 @@ function TrackerPage() {
 function App() {
   return (
     <div>
-      <div style={{
-        background:'#fff', borderBottom:'1px solid #dde1e7',
-        padding:'14px 20px', textAlign:'center',
-        position:'sticky', top:0, zIndex:100,
-        boxShadow:'0 1px 4px #00000011',
-      }}>
-        <div style={{fontFamily:"'Bebas Neue', sans-serif", fontSize:'18px', letterSpacing:'6px', color:'#00b85c'}}>FW WALKAWAY</div>
-        <div style={{fontSize:'8px', letterSpacing:'3px', color:'#9aa5b4', marginTop:'2px', textTransform:'uppercase'}}>Prop Tracker</div>
-      </div>
+      <MoneyMachineHeader />
       <TrackerPage />
     </div>
   );
