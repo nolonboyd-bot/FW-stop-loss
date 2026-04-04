@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MNQ Trading Tools</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
+  <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { background: #f0f2f5; font-family: 'DM Mono', monospace; }
+
+    /* TAB NAV */
+    .tab-bar {
+      display: flex;
+      background: #ffffff;
+      border-bottom: 1px solid #dde1e7;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      align-items: center;
+      box-shadow: 0 1px 4px #00000011;
+    }
+    .tab-btn {
+      flex: 1;
+      padding: 14px 8px;
+      background: none;
+      border: none;
+      color: #9aa5b4;
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 14px;
+      letter-spacing: 3px;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: all 0.2s;
+    }
+    .tab-btn.active {
+      color: #00b85c;
+      border-bottom: 2px solid #00b85c;
+    }
+    .brand-center {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 13px;
+      letter-spacing: 4px;
+      color: #00b85c;
+      text-align: center;
+      white-space: nowrap;
+      padding-bottom: 2px;
+    }
+
+    /* SHARED */
+    .page { display: none; }
+    .page.active { display: block; }
+
+    /* ===================== TRACKER PAGE ===================== */
+    .tracker-wrap {
+      min-height: 100vh;
+      background: #f0f2f5;
+      color: #1a2332;
+      padding: 20px 24px 80px;
+    }
+    .content-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+    @media (min-width: 700px) {
+      .tracker-wrap { padding: 24px 32px 80px; }
+      .content-grid { grid-template-columns: 1fr 1fr; }
+      .content-grid .full-col { grid-column: 1 / -1; }
+    }
+    @media (min-width: 1100px) {
+      .tracker-wrap { padding: 28px 48px 80px; }
+      .content-grid { grid-template-columns: 1fr 1fr 1fr; }
+    }
+    .top-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+    .brand { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 4px; color: #1a2332; }
+    .session-badge { font-size: 9px; letter-spacing: 2px; color: #9aa5b4; text-transform: uppercase; }
+    .health-card { background: #fff; border: 1px solid #dde1e7; border-radius: 8px; padding: 20px; margin-bottom: 12px; box-shadow: 0 1px 4px #00000008; }
+    .health-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 14px; }
+    .health-label { font-size: 8px; letter-spacing: 3px; color: #9aa5b4; text-transform: uppercase; }
+    .health-pct { font-family: 'Bebas Neue', sans-serif; font-size: 28px; letter-spacing: 2px; line-height: 1; }
+    .bar-track { height: 6px; background: #eef0f3; border-radius: 3px; overflow: hidden; margin-bottom: 10px; }
+    .bar-fill { height: 100%; border-radius: 3px; transition: width 0.5s cubic-bezier(0.4,0,0.2,1), background 0.3s; }
+    .health-sub { display: flex; justify-content: space-between; font-size: 9px; color: #9aa5b4; letter-spacing: 1px; }
+    .metrics-row { display: contents; }
+    .content-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
+    .metric { background: #fff; border: 1px solid #dde1e7; border-radius: 8px; padding: 14px 12px; text-align: center; box-shadow: 0 1px 4px #00000008; }
+    .metric-val { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 1px; line-height: 1; margin-bottom: 4px; }
+    .metric-label { font-size: 7px; letter-spacing: 2px; color: #9aa5b4; text-transform: uppercase; }
+    .risk-box { background: #fff; border: 1px solid #dde1e7; border-radius: 8px; padding: 18px 20px; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 1px 4px #00000008; }
+    .risk-label { font-size: 8px; letter-spacing: 3px; color: #6b7a8d; text-transform: uppercase; margin-bottom: 4px; }
+    .risk-amount { font-family: 'Bebas Neue', sans-serif; font-size: 42px; color: #00b85c; letter-spacing: 2px; line-height: 1; }
+    .risk-formula { font-size: 10px; color: #9aa5b4; margin-top: 4px; letter-spacing: 1px; }
+    .risk-pool-label { font-size: 8px; letter-spacing: 2px; color: #9aa5b4; text-transform: uppercase; margin-bottom: 4px; }
+    .risk-pool-val { font-family: 'Bebas Neue', sans-serif; font-size: 20px; color: #1a2332; letter-spacing: 1px; }
+    .add-section { background: #fff; border: 1px solid #dde1e7; border-radius: 8px; padding: 18px 20px; margin-bottom: 12px; box-shadow: 0 1px 4px #00000008; }
+    .section-title { font-size: 8px; letter-spacing: 3px; color: #9aa5b4; text-transform: uppercase; margin-bottom: 14px; }
+    .input-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+    .input-group { display: flex; flex-direction: column; gap: 5px; }
+    .input-label { font-size: 8px; letter-spacing: 2px; color: #6b7a8d; text-transform: uppercase; }
+    .tinput, .tselect {
+      background: #f5f7fa; border: 1px solid #dde1e7; border-radius: 6px;
+      padding: 9px 12px; color: #1a2332; font-family: 'DM Mono', monospace;
+      font-size: 13px; outline: none; transition: border-color 0.2s; width: 100%;
+    }
+    .tinput:focus, .tselect:focus { border-color: #00b85c88; background: #fff; }
+    .tinput::placeholder { color: #c5cdd8; }
+    .tselect option { background: #fff; color: #1a2332; }
+    .full-width { grid-column: 1 / -1; }
+    .add-btn {
+      width: 100%; background: #00b85c; border: none;
+      border-radius: 6px; padding: 12px; color: #fff;
+      font-family: 'Bebas Neue', sans-serif; font-size: 16px; letter-spacing: 3px;
+      cursor: pointer; transition: background 0.2s; margin-top: 4px;
+    }
+    .add-btn:hover { background: #009e4f; }
+    .log-section { background: #fff; border: 1px solid #dde1e7; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 4px #00000008; }
+    .log-header { padding: 14px 20px; border-bottom: 1px solid #eef0f3; display: flex; justify-content: space-between; align-items: center; }
+    .clear-btn { font-size: 8px; letter-spacing: 2px; color: #9aa5b4; background: none; border: none; cursor: pointer; font-family: 'DM Mono', monospace; text-transform: uppercase; }
+    .clear-btn:hover { color: #e03a52; }
+    .trade-row { display: grid; grid-template-columns: 28px 1fr auto auto; gap: 10px; align-items: center; padding: 11px 20px; border-bottom: 1px solid #eef0f3; }
+    .trade-row:last-child { border-bottom: none; }
+    .trade-num { font-size: 9px; color: #9aa5b4; text-align: center; }
+    .trade-name { font-size: 12px; color: #1a2332; margin-bottom: 2px; }
+    .trade-meta { font-size: 9px; color: #9aa5b4; letter-spacing: 1px; }
+    .trade-pnl { font-family: 'Bebas Neue', sans-serif; font-size: 16px; letter-spacing: 1px; text-align: right; }
+    .trade-del { background: none; border: none; color: #c5cdd8; cursor: pointer; font-size: 14px; transition: color 0.2s; }
+    .trade-del:hover { color: #e03a52; }
+    .empty-log { padding: 30px 20px; text-align: center; font-size: 10px; color: #c5cdd8; letter-spacing: 2px; text-transform: uppercase; }
+    .danger-banner { background: #fff0f3; border: 1px solid #e03a5233; border-radius: 8px; padding: 12px 16px; margin-bottom: 12px; font-size: 10px; color: #e03a52; letter-spacing: 1px; }
+    .green { color: #00b85c; } .red { color: #e03a52; } .white { color: #1a2332; }
+  </style>
+</head>
+<body>
+
+<div id="root"></div>
+
+<script type="text/babel">
+const { useState, useEffect, useMemo } = React;
+
+// ─────────────────────────────────────────────
+// PROP TRACKER
+// ─────────────────────────────────────────────
+const DIVISOR = 7;
+
+const INSTRUMENTS = {
+  MNQ: { name: 'MNQ', label: 'Micro Nasdaq', tickValue: 0.50, tickSize: 0.25, defaultTicks: 40 },
+  MGC: { name: 'MGC', label: 'Micro Gold',   tickValue: 1.00, tickSize: 0.10, defaultTicks: 25 },
+};
+
+function TrackerPage() {
+  const [trades, setTrades] = useState([]);
+  const [form, setForm] = useState({ label: '', pnl: '', outcome: 'win' });
+  const [balance, setBalance] = useState('');
+  const [drawdown, setDrawdown] = useState('');
+  const [configured, setConfigured] = useState(false);
+  const [instrument, setInstrument] = useState('MNQ');
+
+  const inst = INSTRUMENTS[instrument];
+  const startingDrawdown = parseFloat(drawdown) || 2500;
+  const startingBalance = parseFloat(balance) || 0;
+
+  const stats = useMemo(() => {
+    const totalPnl = trades.reduce((s, t) => s + t.pnl, 0);
+    const currentPool = startingDrawdown + Math.max(0, totalPnl);
+    const riskPerTrade = currentPool / DIVISOR;
+    const poolPct = Math.min(100, Math.max(0, ((startingDrawdown + totalPnl) / startingDrawdown) * 100));
+    const wins = trades.filter(t => t.pnl > 0).length;
+    const losses = trades.filter(t => t.pnl < 0).length;
+    const winRate = trades.length ? Math.round((wins / trades.length) * 100) : 0;
+    const isBlownOut = totalPnl <= -startingDrawdown;
+    const remaining = startingDrawdown + totalPnl;
+    const currentBalance = startingBalance + totalPnl;
+    return { totalPnl, currentPool, riskPerTrade, poolPct, wins, losses, winRate, isBlownOut, remaining, currentBalance };
+  }, [trades, startingDrawdown, startingBalance]);
+
+  const barColor = stats.poolPct >= 60 ? '#00b85c' : stats.poolPct >= 30 ? '#f0a500' : '#e03a52';
+  const maxContractsAtDefault = Math.floor(stats.riskPerTrade / (inst.defaultTicks * inst.tickValue));
+  const tableMax = Math.max(maxContractsAtDefault + 3, 10);
+
+  const addTrade = () => {
+    const pnlVal = parseFloat(form.pnl);
+    if (!form.pnl || isNaN(pnlVal)) return;
+    const finalPnl = form.outcome === 'win' ? Math.abs(pnlVal) : -Math.abs(pnlVal);
+    setTrades(prev => [{
+      id: Date.now(),
+      label: form.label || `Trade ${prev.length + 1}`,
+      pnl: finalPnl,
+      instrument,
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    }, ...prev]);
+    setForm({ label: '', pnl: '', outcome: 'win' });
+  };
+
+  const removeTrade = id => setTrades(prev => prev.filter(t => t.id !== id));
+
+  const tableRows = [];
+  for (let c = tableMax; c >= 1; c--) {
+    const maxTicks = Math.floor(stats.riskPerTrade / (c * inst.tickValue));
+    const isAffordable = (c * inst.defaultTicks * inst.tickValue) <= stats.riskPerTrade;
+    tableRows.push({ contracts: c, maxTicks, isAffordable });
+  }
+
+  // Setup screen
+  if (!configured) {
+    return (
+      <div className="tracker-wrap">
+        <div style={{textAlign:'center', marginBottom:'28px', paddingTop:'12px'}}>
+          <div style={{fontFamily:"'Bebas Neue', sans-serif", fontSize:'28px', letterSpacing:'6px', color:'#1a2332'}}>FW WALKAWAY</div>
+          <div style={{fontSize:'9px', letterSpacing:'3px', color:'#9aa5b4', marginTop:'4px', textTransform:'uppercase'}}>Prop Tracker Setup</div>
+        </div>
+
+        <div className="add-section" style={{marginBottom:'12px'}}>
+          <div className="section-title">Account Settings</div>
+          <div className="input-group" style={{marginBottom:'14px'}}>
+            <label className="input-label">Starting Account Balance ($)</label>
+            <input className="tinput" type="number" placeholder="e.g. 50000"
+              value={balance} onChange={e => setBalance(e.target.value)} />
+            <div style={{fontSize:'8px', color:'#9aa5b4', marginTop:'4px', letterSpacing:'1px'}}>your prop firm account size</div>
+          </div>
+          <div className="input-group" style={{marginBottom:'20px'}}>
+            <label className="input-label">Max Drawdown Limit ($)</label>
+            <input className="tinput" type="number" placeholder="e.g. 2500"
+              value={drawdown} onChange={e => setDrawdown(e.target.value)} />
+            <div style={{fontSize:'8px', color:'#9aa5b4', marginTop:'4px', letterSpacing:'1px'}}>how much you're allowed to lose total</div>
+          </div>
+
+          {drawdown && (
+            <div style={{background:'#f0faf5', border:'1px solid #b8e8cf', borderRadius:'6px', padding:'12px 14px', marginBottom:'16px'}}>
+              <div style={{fontSize:'8px', letterSpacing:'2px', color:'#6b7a8d', textTransform:'uppercase', marginBottom:'6px'}}>Risk Per Trade</div>
+              <div style={{fontFamily:"'Bebas Neue', sans-serif", fontSize:'36px', color:'#00b85c', letterSpacing:'2px', lineHeight:1}}>
+                ${(parseFloat(drawdown) / DIVISOR).toFixed(0)}
+              </div>
+              <div style={{fontSize:'9px', color:'#9aa5b4', marginTop:'4px'}}>${drawdown} drawdown ÷ {DIVISOR}</div>
+            </div>
+          )}
+
+          <button className="add-btn" onClick={() => { if (drawdown) setConfigured(true); }}
+            style={{opacity: drawdown ? 1 : 0.4}}>
+            START TRADING
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="tracker-wrap">
+      <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'16px'}}>
+        <div style={{display:'flex', flexDirection:'column', gap:'2px'}}>
+          <div className="session-badge">DD: ${startingDrawdown.toLocaleString()}</div>
+          {startingBalance > 0 && <div className="session-badge">BAL: ${(stats.currentBalance).toLocaleString(undefined,{maximumFractionDigits:0})}</div>}
+        </div>
+      </div>
+
+      {stats.isBlownOut && (
+        <div className="danger-banner">⚠ DRAWDOWN LIMIT REACHED — STOP TRADING</div>
+      )}
+
+      {/* Instrument Toggle */}
+      <div style={{display:'flex', background:'#f0f2f5', border:'1px solid #dde1e7', borderRadius:'8px', padding:'4px', marginBottom:'12px', gap:'4px'}}>
+        {Object.values(INSTRUMENTS).map(i => (
+          <button key={i.name} onClick={() => setInstrument(i.name)} style={{
+            flex:1, padding:'10px', border:'none', borderRadius:'6px',
+            background: instrument === i.name ? '#fff' : 'transparent',
+            boxShadow: instrument === i.name ? '0 1px 4px #00000014' : 'none',
+            fontFamily:"'Bebas Neue', sans-serif", fontSize:'16px', letterSpacing:'3px',
+            color: instrument === i.name ? '#00b85c' : '#9aa5b4',
+            cursor:'pointer', transition:'all 0.2s',
+          }}>
+            {i.name}
+            <div style={{fontSize:'7px', letterSpacing:'1px', color: instrument === i.name ? '#6b7a8d' : '#c5cdd8', fontFamily:"'DM Mono', monospace", marginTop:'2px'}}>
+              {i.label}
+            </div>
+          </button>
+        ))}
+      </div>
+
+      {/* Health Bar */}
+      <div className="content-grid" style={{marginBottom:'0'}}>
+        <div className="health-card full-col">
+        <div className="health-header">
+          <div className="health-label">Account Health</div>
+          <div className="health-pct" style={{color: barColor}}>
+            {stats.isBlownOut ? 'BLOWN' : `${Math.round(stats.poolPct)}%`}
+          </div>
+        </div>
+        <div className="bar-track">
+          <div className="bar-fill" style={{width:`${Math.max(0,stats.poolPct)}%`, background:barColor, boxShadow:`0 0 10px ${barColor}66`}} />
+        </div>
+        <div className="health-sub">
+          <span>Remaining: ${stats.remaining.toFixed(2)}</span>
+          <span>DD Limit: ${startingDrawdown.toLocaleString()}</span>
+        </div>
+        </div>
+
+        {/* Metrics */}
+        <div className="metric">
+          <div className={`metric-val ${stats.totalPnl >= 0 ? 'green' : 'red'}`}>
+            {stats.totalPnl >= 0 ? '+' : ''}{stats.totalPnl.toFixed(0)}
+          </div>
+          <div className="metric-label">Total P&L</div>
+        </div>
+        <div className="metric">
+          <div className="metric-val white">{stats.winRate}%</div>
+          <div className="metric-label">Win Rate</div>
+        </div>
+        <div className="metric">
+          <div className="metric-val white">{trades.length}</div>
+          <div className="metric-label">Trades</div>
+        </div>
+
+        {/* Risk Box */}
+        <div className="risk-box" style={{marginBottom:0}}>
+          <div>
+            <div className="risk-label">Max Risk / Trade</div>
+            <div className="risk-amount">${stats.riskPerTrade.toFixed(0)}</div>
+            <div className="risk-formula">${stats.currentPool.toFixed(0)} pool ÷ {DIVISOR}</div>
+          </div>
+          <div style={{textAlign:'right'}}>
+            <div className="risk-pool-label">Current Pool</div>
+            <div className="risk-pool-val">${stats.currentPool.toFixed(2)}</div>
+            <div style={{fontSize:'9px',color:'#9aa5b4',marginTop:4}}>{stats.wins}W · {stats.losses}L</div>
+            <button onClick={() => { setConfigured(false); setTrades([]); setBalance(''); setDrawdown(''); }}
+              style={{marginTop:'8px', fontSize:'7px', letterSpacing:'2px', color:'#9aa5b4', background:'none', border:'1px solid #dde1e7', borderRadius:'4px', padding:'3px 8px', cursor:'pointer', fontFamily:"'DM Mono', monospace", textTransform:'uppercase'}}>
+              Reset
+            </button>
+          </div>
+        </div>
+
+        {/* Contracts Table */}
+        <div style={{background:'#fff', border:'1px solid #dde1e7', borderRadius:'8px', padding:'16px 20px', boxShadow:'0 1px 4px #00000008'}}>
+          <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'12px'}}>
+            <div style={{fontSize:'8px', letterSpacing:'3px', color:'#6b7a8d', textTransform:'uppercase'}}>{inst.name} Contracts</div>
+            <div style={{fontSize:'8px', letterSpacing:'2px', color:'#6b7a8d', textTransform:'uppercase'}}>1 Tick = ${inst.tickValue.toFixed(2)}</div>
+          </div>
+          <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'4px', marginBottom:'6px'}}>
+            {['Contracts','Max Stop Ticks'].map(h => (
+              <div key={h} style={{fontSize:'7px', letterSpacing:'2px', color:'#9aa5b4', textTransform:'uppercase', textAlign:'center', padding:'4px 0'}}>{h}</div>
+            ))}
+          </div>
+          {tableRows.map(({contracts, maxTicks, isAffordable}) => (
+            <div key={contracts} style={{
+              display:'grid', gridTemplateColumns:'1fr 1fr', gap:'4px', marginBottom:'3px',
+              background: isAffordable ? '#f0faf5' : '#fafbfc',
+              border: isAffordable ? '1px solid #b8e8cf' : '1px solid #eef0f3',
+              borderRadius:'6px', padding:'8px', opacity: isAffordable ? 1 : 0.4,
+              transition:'all 0.3s',
+            }}>
+              <div style={{fontFamily:"'Bebas Neue', sans-serif", fontSize: isAffordable ? '20px' : '16px', color: isAffordable ? '#00b85c' : '#c5cdd8', textAlign:'center', lineHeight:1}}>{contracts}</div>
+              <div style={{fontFamily:"'Bebas Neue', sans-serif", fontSize: isAffordable ? '20px' : '16px', color: isAffordable ? '#d4930a' : '#c5cdd8', textAlign:'center', lineHeight:1}}>{maxTicks}</div>
+            </div>
+          ))}
+          <div style={{marginTop:'10px', fontSize:'8px', color:'#9aa5b4', letterSpacing:'1px', textAlign:'center'}}>
+            count your stop ticks → match to contracts row
+          </div>
+        </div>
+
+        {/* Add Trade */}
+        <div className="add-section" style={{marginBottom:0}}>
+          <div className="section-title">Log Trade</div>
+          <div className="input-row">
+            <div className="input-group">
+              <label className="input-label">Label</label>
+              <input className="tinput" placeholder="e.g. Long MNQ" value={form.label} onChange={e => setForm(f => ({...f, label:e.target.value}))} />
+            </div>
+            <div className="input-group">
+              <label className="input-label">Outcome</label>
+              <select className="tselect" value={form.outcome} onChange={e => setForm(f => ({...f, outcome:e.target.value}))}>
+                <option value="win">WIN</option>
+                <option value="loss">LOSS</option>
+              </select>
+            </div>
+            <div className="input-group full-width">
+              <label className="input-label">Dollar Amount ($)</label>
+              <input className="tinput" type="number" placeholder="e.g. 350" value={form.pnl}
+                onChange={e => setForm(f => ({...f, pnl:e.target.value}))}
+                onKeyDown={e => e.key === 'Enter' && addTrade()} />
+            </div>
+          </div>
+          <button className="add-btn" onClick={addTrade}>+ LOG TRADE</button>
+        </div>
+
+        {/* Trade Log */}
+        <div className="log-section full-col" style={{marginBottom:0}}>
+          <div className="log-header">
+            <div className="section-title" style={{margin:0}}>Trade Log</div>
+            {trades.length > 0 && <button className="clear-btn" onClick={() => setTrades([])}>CLEAR ALL</button>}
+          </div>
+          {trades.length === 0 ? (
+            <div className="empty-log">No trades yet</div>
+          ) : trades.map((t, i) => (
+            <div className="trade-row" key={t.id}>
+              <div className="trade-num">{trades.length - i}</div>
+              <div>
+                <div className="trade-name">{t.label}</div>
+                <div className="trade-meta">{t.time}{t.instrument ? ` · ${t.instrument}` : ''}</div>
+              </div>
+              <div className={`trade-pnl ${t.pnl >= 0 ? 'green' : 'red'}`}>
+                {t.pnl >= 0 ? '+' : ''}${Math.abs(t.pnl).toFixed(0)}
+              </div>
+              <button className="trade-del" onClick={() => removeTrade(t.id)}>✕</button>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────
+// APP SHELL
+// ─────────────────────────────────────────────
+function App() {
+  return (
+    <div>
+      <div style={{
+        background:'#fff', borderBottom:'1px solid #dde1e7',
+        padding:'14px 20px', textAlign:'center',
+        position:'sticky', top:0, zIndex:100,
+        boxShadow:'0 1px 4px #00000011',
+      }}>
+        <div style={{fontFamily:"'Bebas Neue', sans-serif", fontSize:'18px', letterSpacing:'6px', color:'#00b85c'}}>FW WALKAWAY</div>
+        <div style={{fontSize:'8px', letterSpacing:'3px', color:'#9aa5b4', marginTop:'2px', textTransform:'uppercase'}}>Prop Tracker</div>
+      </div>
+      <TrackerPage />
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
