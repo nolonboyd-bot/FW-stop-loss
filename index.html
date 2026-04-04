@@ -156,8 +156,10 @@ function TrackerPage() {
   const [form, setForm] = useState({ label: '', pnl: '', outcome: 'win' });
   const [balance, setBalance] = useState('');
   const [drawdown, setDrawdown] = useState('');
-  const [configured, setConfigured] = useState(false);
   const [instrument, setInstrument] = useState('MNQ');
+  const [payouts, setPayouts] = useState([]);
+  const [payoutForm, setPayoutForm] = useState({ label: '', amount: '' });
+  const [showPayouts, setShowPayouts] = useState(false);
 
   const inst = INSTRUMENTS[instrument];
   const startingDrawdown = parseFloat(drawdown) || 2500;
@@ -165,7 +167,8 @@ function TrackerPage() {
 
   const stats = useMemo(() => {
     const totalPnl = trades.reduce((s, t) => s + t.pnl, 0);
-    const currentPool = Math.max(0, startingDrawdown + totalPnl);
+    const totalPayoutsAmt = payouts.reduce((s, p) => s + p.amount, 0);
+    const currentPool = startingDrawdown + Math.max(0, totalPnl);
     const riskPerTrade = currentPool / DIVISOR;
     const poolPct = Math.min(100, Math.max(0, ((startingDrawdown + totalPnl) / startingDrawdown) * 100));
     const wins = trades.filter(t => t.pnl > 0).length;
@@ -174,8 +177,24 @@ function TrackerPage() {
     const isBlownOut = totalPnl <= -startingDrawdown;
     const remaining = startingDrawdown + totalPnl;
     const currentBalance = startingBalance + totalPnl;
-    return { totalPnl, currentPool, riskPerTrade, poolPct, wins, losses, winRate, isBlownOut, remaining, currentBalance };
-  }, [trades, startingDrawdown, startingBalance]);
+    const netProfit = totalPnl - totalPayoutsAmt;
+    return { totalPnl, totalPayoutsAmt, currentPool, riskPerTrade, poolPct, wins, losses, winRate, isBlownOut, remaining, currentBalance, netProfit };
+  }, [trades, payouts, startingDrawdown, startingBalance]);
+
+  const addPayout = () => {
+    const amt = parseFloat(payoutForm.amount);
+    if (!payoutForm.amount || isNaN(amt) || amt <= 0) return;
+    setPayouts(prev => [{
+      id: Date.now(),
+      label: payoutForm.label || `Payout ${prev.length + 1}`,
+      amount: amt,
+      date: new Date().toLocaleDateString([], { month: 'short', day: 'numeric' }),
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    }, ...prev]);
+    setPayoutForm({ label: '', amount: '' });
+  };
+
+  const removePayout = id => setPayouts(prev => prev.filter(p => p.id !== id));
 
   const barColor = stats.poolPct >= 60 ? '#00b85c' : stats.poolPct >= 30 ? '#f0a500' : '#e03a52';
   const maxContractsAtDefault = Math.floor(stats.riskPerTrade / (inst.defaultTicks * inst.tickValue));
@@ -204,56 +223,39 @@ function TrackerPage() {
     tableRows.push({ contracts: c, maxTicks, isAffordable });
   }
 
-  // Setup screen
-  if (!configured) {
-    return (
-      <div className="tracker-wrap">
-        <div style={{textAlign:'center', marginBottom:'28px', paddingTop:'12px'}}>
-          <div style={{fontFamily:"'Bebas Neue', sans-serif", fontSize:'28px', letterSpacing:'6px', color:'#1a2332'}}>FW WALKAWAY</div>
-          <div style={{fontSize:'9px', letterSpacing:'3px', color:'#9aa5b4', marginTop:'4px', textTransform:'uppercase'}}>Prop Tracker Setup</div>
-        </div>
-
-        <div className="add-section" style={{marginBottom:'12px'}}>
-          <div className="section-title">Account Settings</div>
-          <div className="input-group" style={{marginBottom:'14px'}}>
-            <label className="input-label">Starting Account Balance ($)</label>
-            <input className="tinput" type="number" placeholder="e.g. 50000"
-              value={balance} onChange={e => setBalance(e.target.value)} />
-            <div style={{fontSize:'8px', color:'#9aa5b4', marginTop:'4px', letterSpacing:'1px'}}>your prop firm account size</div>
-          </div>
-          <div className="input-group" style={{marginBottom:'20px'}}>
-            <label className="input-label">Max Drawdown Limit ($)</label>
-            <input className="tinput" type="number" placeholder="e.g. 2500"
-              value={drawdown} onChange={e => setDrawdown(e.target.value)} />
-            <div style={{fontSize:'8px', color:'#9aa5b4', marginTop:'4px', letterSpacing:'1px'}}>how much you're allowed to lose total</div>
-          </div>
-
-          {drawdown && (
-            <div style={{background:'#f0faf5', border:'1px solid #b8e8cf', borderRadius:'6px', padding:'12px 14px', marginBottom:'16px'}}>
-              <div style={{fontSize:'8px', letterSpacing:'2px', color:'#6b7a8d', textTransform:'uppercase', marginBottom:'6px'}}>Risk Per Trade</div>
-              <div style={{fontFamily:"'Bebas Neue', sans-serif", fontSize:'36px', color:'#00b85c', letterSpacing:'2px', lineHeight:1}}>
-                ${(parseFloat(drawdown) / DIVISOR).toFixed(0)}
-              </div>
-              <div style={{fontSize:'9px', color:'#9aa5b4', marginTop:'4px'}}>${drawdown} drawdown ÷ {DIVISOR}</div>
-            </div>
-          )}
-
-          <button className="add-btn" onClick={() => { if (drawdown) setConfigured(true); }}
-            style={{opacity: drawdown ? 1 : 0.4}}>
-            START TRADING
-          </button>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="tracker-wrap">
-      <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'16px'}}>
-        <div style={{display:'flex', flexDirection:'column', gap:'2px'}}>
-          <div className="session-badge">DD: ${startingDrawdown.toLocaleString()}</div>
-          {startingBalance > 0 && <div className="session-badge">BAL: ${(stats.currentBalance).toLocaleString(undefined,{maximumFractionDigits:0})}</div>}
+
+      {/* Account Settings — always visible at top */}
+      <div style={{background:'#fff', border:'1px solid #dde1e7', borderRadius:'8px', padding:'16px 20px', marginBottom:'12px', boxShadow:'0 1px 4px #00000008'}}>
+        <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'12px'}}>
+          <div style={{fontSize:'8px', letterSpacing:'3px', color:'#9aa5b4', textTransform:'uppercase'}}>Account Settings</div>
+          {(balance || drawdown) && (
+            <button onClick={() => { setTrades([]); setPayouts([]); setBalance(''); setDrawdown(''); }}
+              style={{fontSize:'7px', letterSpacing:'2px', color:'#9aa5b4', background:'none', border:'1px solid #dde1e7', borderRadius:'4px', padding:'3px 8px', cursor:'pointer', fontFamily:"'DM Mono', monospace", textTransform:'uppercase'}}>
+              Reset
+            </button>
+          )}
         </div>
+        <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'10px', alignItems:'end'}}>
+          <div className="input-group">
+            <label className="input-label">Account Balance ($)</label>
+            <input className="tinput" type="number" placeholder="e.g. 50000"
+              value={balance} onChange={e => setBalance(e.target.value)} />
+          </div>
+          <div className="input-group">
+            <label className="input-label">Max Drawdown ($)</label>
+            <input className="tinput" type="number" placeholder="e.g. 2500"
+              value={drawdown} onChange={e => setDrawdown(e.target.value)} />
+          </div>
+        </div>
+        {drawdown && (
+          <div style={{marginTop:'10px', display:'flex', alignItems:'center', gap:'8px', background:'#f0faf5', border:'1px solid #b8e8cf', borderRadius:'6px', padding:'8px 14px'}}>
+            <div style={{fontSize:'8px', letterSpacing:'2px', color:'#6b7a8d', textTransform:'uppercase'}}>Risk / Trade:</div>
+            <div style={{fontFamily:"'Bebas Neue', sans-serif", fontSize:'22px', color:'#00b85c', letterSpacing:'2px', lineHeight:1}}>${(startingDrawdown / DIVISOR).toFixed(0)}</div>
+            <div style={{fontSize:'9px', color:'#9aa5b4', letterSpacing:'1px'}}>${startingDrawdown.toLocaleString()} ÷ {DIVISOR}</div>
+          </div>
+        )}
       </div>
 
       {stats.isBlownOut && (
@@ -324,88 +326,176 @@ function TrackerPage() {
             <div className="risk-pool-label">Current Pool</div>
             <div className="risk-pool-val">${stats.currentPool.toFixed(2)}</div>
             <div style={{fontSize:'9px',color:'#9aa5b4',marginTop:4}}>{stats.wins}W · {stats.losses}L</div>
-            <button onClick={() => { setConfigured(false); setTrades([]); setBalance(''); setDrawdown(''); }}
-              style={{marginTop:'8px', fontSize:'7px', letterSpacing:'2px', color:'#9aa5b4', background:'none', border:'1px solid #dde1e7', borderRadius:'4px', padding:'3px 8px', cursor:'pointer', fontFamily:"'DM Mono', monospace", textTransform:'uppercase'}}>
-              Reset
-            </button>
           </div>
         </div>
 
-        {/* Contracts Table */}
-        <div style={{background:'#fff', border:'1px solid #dde1e7', borderRadius:'8px', padding:'16px 20px', boxShadow:'0 1px 4px #00000008'}}>
-          <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'12px'}}>
-            <div style={{fontSize:'8px', letterSpacing:'3px', color:'#6b7a8d', textTransform:'uppercase'}}>{inst.name} Contracts</div>
-            <div style={{fontSize:'8px', letterSpacing:'2px', color:'#6b7a8d', textTransform:'uppercase'}}>1 Tick = ${inst.tickValue.toFixed(2)}</div>
-          </div>
-          <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'4px', marginBottom:'6px'}}>
-            {['Contracts','Max Stop Ticks'].map(h => (
-              <div key={h} style={{fontSize:'7px', letterSpacing:'2px', color:'#9aa5b4', textTransform:'uppercase', textAlign:'center', padding:'4px 0'}}>{h}</div>
+        {/* ── BOTTOM ROW: Contracts LEFT | Log+Journal+Payouts RIGHT ── */}
+        <div className="full-col" style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'12px', alignItems:'start'}}>
+
+          {/* LEFT — Contracts Table */}
+          <div style={{background:'#fff', border:'1px solid #dde1e7', borderRadius:'8px', padding:'16px 20px', boxShadow:'0 1px 4px #00000008'}}>
+            <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'12px'}}>
+              <div style={{fontSize:'8px', letterSpacing:'3px', color:'#6b7a8d', textTransform:'uppercase'}}>{inst.name} Contracts</div>
+              <div style={{fontSize:'8px', letterSpacing:'2px', color:'#6b7a8d', textTransform:'uppercase'}}>1 Tick = ${inst.tickValue.toFixed(2)}</div>
+            </div>
+            <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'4px', marginBottom:'6px'}}>
+              {['Contracts','Max Stop Ticks'].map(h => (
+                <div key={h} style={{fontSize:'7px', letterSpacing:'2px', color:'#9aa5b4', textTransform:'uppercase', textAlign:'center', padding:'4px 0'}}>{h}</div>
+              ))}
+            </div>
+            {tableRows.map(({contracts, maxTicks, isAffordable}) => (
+              <div key={contracts} style={{
+                display:'grid', gridTemplateColumns:'1fr 1fr', gap:'4px', marginBottom:'3px',
+                background: isAffordable ? '#f0faf5' : '#fafbfc',
+                border: isAffordable ? '1px solid #b8e8cf' : '1px solid #eef0f3',
+                borderRadius:'6px', padding:'8px', opacity: isAffordable ? 1 : 0.4,
+                transition:'all 0.3s',
+              }}>
+                <div style={{fontFamily:"'Bebas Neue', sans-serif", fontSize: isAffordable ? '20px' : '16px', color: isAffordable ? '#00b85c' : '#c5cdd8', textAlign:'center', lineHeight:1}}>{contracts}</div>
+                <div style={{fontFamily:"'Bebas Neue', sans-serif", fontSize: isAffordable ? '20px' : '16px', color: isAffordable ? '#d4930a' : '#c5cdd8', textAlign:'center', lineHeight:1}}>{maxTicks}</div>
+              </div>
             ))}
-          </div>
-          {tableRows.map(({contracts, maxTicks, isAffordable}) => (
-            <div key={contracts} style={{
-              display:'grid', gridTemplateColumns:'1fr 1fr', gap:'4px', marginBottom:'3px',
-              background: isAffordable ? '#f0faf5' : '#fafbfc',
-              border: isAffordable ? '1px solid #b8e8cf' : '1px solid #eef0f3',
-              borderRadius:'6px', padding:'8px', opacity: isAffordable ? 1 : 0.4,
-              transition:'all 0.3s',
-            }}>
-              <div style={{fontFamily:"'Bebas Neue', sans-serif", fontSize: isAffordable ? '20px' : '16px', color: isAffordable ? '#00b85c' : '#c5cdd8', textAlign:'center', lineHeight:1}}>{contracts}</div>
-              <div style={{fontFamily:"'Bebas Neue', sans-serif", fontSize: isAffordable ? '20px' : '16px', color: isAffordable ? '#d4930a' : '#c5cdd8', textAlign:'center', lineHeight:1}}>{maxTicks}</div>
+            <div style={{marginTop:'10px', fontSize:'8px', color:'#9aa5b4', letterSpacing:'1px', textAlign:'center'}}>
+              count your stop ticks → match to contracts row
             </div>
-          ))}
-          <div style={{marginTop:'10px', fontSize:'8px', color:'#9aa5b4', letterSpacing:'1px', textAlign:'center'}}>
-            count your stop ticks → match to contracts row
           </div>
-        </div>
 
-        {/* Add Trade */}
-        <div className="add-section" style={{marginBottom:0}}>
-          <div className="section-title">Log Trade</div>
-          <div className="input-row">
-            <div className="input-group">
-              <label className="input-label">Label</label>
-              <input className="tinput" placeholder="e.g. Long MNQ" value={form.label} onChange={e => setForm(f => ({...f, label:e.target.value}))} />
-            </div>
-            <div className="input-group">
-              <label className="input-label">Outcome</label>
-              <select className="tselect" value={form.outcome} onChange={e => setForm(f => ({...f, outcome:e.target.value}))}>
-                <option value="win">WIN</option>
-                <option value="loss">LOSS</option>
-              </select>
-            </div>
-            <div className="input-group full-width">
-              <label className="input-label">Dollar Amount ($)</label>
-              <input className="tinput" type="number" placeholder="e.g. 350" value={form.pnl}
-                onChange={e => setForm(f => ({...f, pnl:e.target.value}))}
-                onKeyDown={e => e.key === 'Enter' && addTrade()} />
-            </div>
-          </div>
-          <button className="add-btn" onClick={addTrade}>+ LOG TRADE</button>
-        </div>
+          {/* RIGHT — Log Trade + Trade Journal + Payouts stacked */}
+          <div style={{display:'flex', flexDirection:'column', gap:'12px'}}>
 
-        {/* Trade Log */}
-        <div className="log-section full-col" style={{marginBottom:0}}>
-          <div className="log-header">
-            <div className="section-title" style={{margin:0}}>Trade Log</div>
-            {trades.length > 0 && <button className="clear-btn" onClick={() => setTrades([])}>CLEAR ALL</button>}
-          </div>
-          {trades.length === 0 ? (
-            <div className="empty-log">No trades yet</div>
-          ) : trades.map((t, i) => (
-            <div className="trade-row" key={t.id}>
-              <div className="trade-num">{trades.length - i}</div>
-              <div>
-                <div className="trade-name">{t.label}</div>
-                <div className="trade-meta">{t.time}{t.instrument ? ` · ${t.instrument}` : ''}</div>
+            {/* Log Trade */}
+            <div style={{background:'#fff', border:'1px solid #dde1e7', borderRadius:'8px', padding:'16px 20px', boxShadow:'0 1px 4px #00000008'}}>
+              <div style={{fontSize:'8px', letterSpacing:'3px', color:'#9aa5b4', textTransform:'uppercase', marginBottom:'14px'}}>Log Trade</div>
+              <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'10px', marginBottom:'10px'}}>
+                <div className="input-group">
+                  <label className="input-label">Label</label>
+                  <input className="tinput" style={{fontSize:'14px', padding:'11px 14px'}} placeholder="e.g. Long MNQ" value={form.label} onChange={e => setForm(f => ({...f, label:e.target.value}))} />
+                </div>
+                <div className="input-group">
+                  <label className="input-label">Outcome</label>
+                  <select className="tselect" style={{fontSize:'14px', padding:'11px 14px'}} value={form.outcome} onChange={e => setForm(f => ({...f, outcome:e.target.value}))}>
+                    <option value="win">WIN</option>
+                    <option value="loss">LOSS</option>
+                  </select>
+                </div>
+                <div className="input-group" style={{gridColumn:'1/-1'}}>
+                  <label className="input-label">Dollar Amount ($)</label>
+                  <input className="tinput" style={{fontSize:'14px', padding:'11px 14px'}} type="number" placeholder="e.g. 350" value={form.pnl}
+                    onChange={e => setForm(f => ({...f, pnl:e.target.value}))}
+                    onKeyDown={e => e.key === 'Enter' && addTrade()} />
+                </div>
               </div>
-              <div className={`trade-pnl ${t.pnl >= 0 ? 'green' : 'red'}`}>
-                {t.pnl >= 0 ? '+' : ''}${Math.abs(t.pnl).toFixed(0)}
-              </div>
-              <button className="trade-del" onClick={() => removeTrade(t.id)}>✕</button>
+              <button className="add-btn" style={{padding:'14px', fontSize:'17px'}} onClick={addTrade}>+ LOG TRADE</button>
             </div>
-          ))}
-        </div>
+
+            {/* Trade Journal */}
+            <div style={{background:'#fff', border:'1px solid #dde1e7', borderRadius:'8px', overflow:'hidden', boxShadow:'0 1px 4px #00000008'}}>
+              <div style={{padding:'16px 20px', borderBottom:'1px solid #eef0f3', display:'flex', justifyContent:'space-between', alignItems:'center'}}>
+                <div style={{fontSize:'8px', letterSpacing:'3px', color:'#9aa5b4', textTransform:'uppercase'}}>Trade Journal</div>
+                {trades.length > 0 && <button className="clear-btn" onClick={() => setTrades([])}>CLEAR ALL</button>}
+              </div>
+              {trades.length === 0 ? (
+                <div style={{padding:'36px 20px', textAlign:'center', fontSize:'11px', color:'#c5cdd8', letterSpacing:'2px', textTransform:'uppercase'}}>No trades yet</div>
+              ) : trades.map((t, i) => (
+                <div key={t.id} style={{display:'grid', gridTemplateColumns:'32px 1fr auto auto', gap:'12px', alignItems:'center', padding:'14px 20px', borderBottom: i < trades.length - 1 ? '1px solid #eef0f3' : 'none'}}>
+                  <div style={{fontSize:'10px', color:'#9aa5b4', textAlign:'center'}}>{trades.length - i}</div>
+                  <div>
+                    <div style={{fontSize:'14px', color:'#1a2332', marginBottom:'3px'}}>{t.label}</div>
+                    <div style={{fontSize:'10px', color:'#9aa5b4', letterSpacing:'1px'}}>{t.time}{t.instrument ? ` · ${t.instrument}` : ''}</div>
+                  </div>
+                  <div style={{fontFamily:"'Bebas Neue', sans-serif", fontSize:'20px', letterSpacing:'1px', textAlign:'right'}} className={t.pnl >= 0 ? 'green' : 'red'}>
+                    {t.pnl >= 0 ? '+' : ''}${Math.abs(t.pnl).toFixed(0)}
+                  </div>
+                  <button className="trade-del" style={{fontSize:'16px'}} onClick={() => removeTrade(t.id)}>✕</button>
+                </div>
+              ))}
+            </div>
+
+            {/* Payouts */}
+            <div style={{background:'#fff', border:'1px solid #dde1e7', borderRadius:'8px', overflow:'hidden', boxShadow:'0 1px 4px #00000008'}}>
+              <div style={{padding:'16px 20px', borderBottom:'1px solid #eef0f3', display:'flex', justifyContent:'space-between', alignItems:'center', cursor:'pointer'}} onClick={() => setShowPayouts(v => !v)}>
+                <div style={{display:'flex', alignItems:'center', gap:'12px'}}>
+                  <div style={{fontSize:'8px', letterSpacing:'3px', color:'#9aa5b4', textTransform:'uppercase'}}>Payouts</div>
+                  {payouts.length > 0 && (
+                    <div style={{fontFamily:"'Bebas Neue', sans-serif", fontSize:'18px', color:'#f0a500', letterSpacing:'1px'}}>
+                      ${stats.totalPayoutsAmt.toFixed(0)} total
+                    </div>
+                  )}
+                </div>
+                <div style={{display:'flex', alignItems:'center', gap:'12px'}}>
+                  {payouts.length > 0 && (
+                    <div style={{fontSize:'9px', letterSpacing:'2px', color:'#9aa5b4', textTransform:'uppercase'}}>
+                      {payouts.length} payout{payouts.length !== 1 ? 's' : ''}
+                    </div>
+                  )}
+                  <div style={{color:'#9aa5b4', fontSize:'16px', transition:'transform 0.2s', transform: showPayouts ? 'rotate(180deg)' : 'rotate(0deg)'}}>▾</div>
+                </div>
+              </div>
+
+              {showPayouts && (
+                <div style={{padding:'16px 20px'}}>
+                  {payouts.length > 0 && (
+                    <div style={{display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:'8px', marginBottom:'16px'}}>
+                      <div style={{background:'#f0faf5', border:'1px solid #b8e8cf', borderRadius:'6px', padding:'12px', textAlign:'center'}}>
+                        <div style={{fontFamily:"'Bebas Neue', sans-serif", fontSize:'22px', color:'#00b85c', letterSpacing:'1px', lineHeight:1}}>${stats.totalPnl.toFixed(0)}</div>
+                        <div style={{fontSize:'7px', letterSpacing:'2px', color:'#6b7a8d', textTransform:'uppercase', marginTop:'5px'}}>Gross P&L</div>
+                      </div>
+                      <div style={{background:'#fff8ec', border:'1px solid #f0a50033', borderRadius:'6px', padding:'12px', textAlign:'center'}}>
+                        <div style={{fontFamily:"'Bebas Neue', sans-serif", fontSize:'22px', color:'#f0a500', letterSpacing:'1px', lineHeight:1}}>-${stats.totalPayoutsAmt.toFixed(0)}</div>
+                        <div style={{fontSize:'7px', letterSpacing:'2px', color:'#6b7a8d', textTransform:'uppercase', marginTop:'5px'}}>Paid Out</div>
+                      </div>
+                      <div style={{background:'#f5f7fa', border:'1px solid #dde1e7', borderRadius:'6px', padding:'12px', textAlign:'center'}}>
+                        <div style={{fontFamily:"'Bebas Neue', sans-serif", fontSize:'22px', color: stats.netProfit >= 0 ? '#1a2332' : '#e03a52', letterSpacing:'1px', lineHeight:1}}>${stats.netProfit.toFixed(0)}</div>
+                        <div style={{fontSize:'7px', letterSpacing:'2px', color:'#6b7a8d', textTransform:'uppercase', marginTop:'5px'}}>Net Profit</div>
+                      </div>
+                    </div>
+                  )}
+                  <div style={{marginBottom:'14px'}}>
+                    <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'10px', marginBottom:'10px'}}>
+                      <div className="input-group">
+                        <label className="input-label">Label</label>
+                        <input className="tinput" style={{fontSize:'14px', padding:'11px 14px'}} placeholder="e.g. Weekly payout" value={payoutForm.label} onChange={e => setPayoutForm(f => ({...f, label:e.target.value}))} />
+                      </div>
+                      <div className="input-group">
+                        <label className="input-label">Amount ($)</label>
+                        <input className="tinput" style={{fontSize:'14px', padding:'11px 14px'}} type="number" placeholder="e.g. 500" value={payoutForm.amount}
+                          onChange={e => setPayoutForm(f => ({...f, amount:e.target.value}))}
+                          onKeyDown={e => e.key === 'Enter' && addPayout()} />
+                      </div>
+                    </div>
+                    <button className="add-btn" style={{padding:'14px', fontSize:'17px', background:'#f0a500'}} onClick={addPayout}>+ LOG PAYOUT</button>
+                  </div>
+                  {payouts.length === 0 ? (
+                    <div style={{padding:'20px 0 4px', textAlign:'center', fontSize:'11px', color:'#c5cdd8', letterSpacing:'2px', textTransform:'uppercase'}}>No payouts logged yet</div>
+                  ) : (
+                    <div style={{borderTop:'1px solid #eef0f3', marginTop:'4px'}}>
+                      {payouts.length > 1 && (
+                        <div style={{display:'flex', justifyContent:'flex-end', padding:'8px 0'}}>
+                          <button className="clear-btn" onClick={() => setPayouts([])}>CLEAR ALL</button>
+                        </div>
+                      )}
+                      {payouts.map((p, i) => (
+                        <div key={p.id} style={{display:'grid', gridTemplateColumns:'32px 1fr auto auto', gap:'12px', alignItems:'center', padding:'13px 0', borderBottom: i < payouts.length - 1 ? '1px solid #eef0f3' : 'none'}}>
+                          <div style={{fontSize:'10px', color:'#9aa5b4', textAlign:'center'}}>{payouts.length - i}</div>
+                          <div>
+                            <div style={{fontSize:'14px', color:'#1a2332', marginBottom:'3px'}}>{p.label}</div>
+                            <div style={{fontSize:'10px', color:'#9aa5b4', letterSpacing:'1px'}}>{p.date} · {p.time}</div>
+                          </div>
+                          <div style={{fontFamily:"'Bebas Neue', sans-serif", fontSize:'20px', color:'#f0a500', letterSpacing:'1px', textAlign:'right'}}>
+                            +${p.amount.toFixed(0)}
+                          </div>
+                          <button className="trade-del" style={{fontSize:'16px'}} onClick={() => removePayout(p.id)}>✕</button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+          </div>{/* end RIGHT col */}
+        </div>{/* end BOTTOM ROW */}
+
       </div>
     </div>
   );
