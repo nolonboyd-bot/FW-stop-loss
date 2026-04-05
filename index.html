@@ -1,719 +1,808 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>MNQ Trading Tools</title>
-  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
-  <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body { background: #f0f2f5; font-family: 'DM Mono', monospace; }
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>FW Walkaway · Prop Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet"/>
+<script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+:root {
+  --bg:#111826; --bg2:#172030; --bg3:#1c2a3e; --card:#192234;
+  --border:#2a3f5c; --border2:#344e70;
+  --text:#eaf2ff; --text2:#7a9ec4; --text3:#3a5878;
+  --green:#00c96a; --green2:#00ff84; --red:#f04060; --gold:#f0b000; --gold2:#ffd040;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{background:var(--bg);font-family:'DM Mono',monospace;color:var(--text);min-height:100vh;overflow-x:hidden;}
 
-    /* TAB NAV */
-    .tab-bar {
-      display: flex;
-      background: #ffffff;
-      border-bottom: 1px solid #dde1e7;
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      align-items: center;
-      box-shadow: 0 1px 4px #00000011;
-    }
-    .tab-btn {
-      flex: 1;
-      padding: 14px 8px;
-      background: none;
-      border: none;
-      color: #9aa5b4;
-      font-family: 'Bebas Neue', sans-serif;
-      font-size: 14px;
-      letter-spacing: 3px;
-      cursor: pointer;
-      border-bottom: 2px solid transparent;
-      transition: all 0.2s;
-    }
-    .tab-btn.active {
-      color: #00b85c;
-      border-bottom: 2px solid #00b85c;
-    }
-    .brand-center {
-      font-family: 'Bebas Neue', sans-serif;
-      font-size: 13px;
-      letter-spacing: 4px;
-      color: #00b85c;
-      text-align: center;
-      white-space: nowrap;
-      padding-bottom: 2px;
-    }
+/* ── SIDE SLOGANS ── */
+.side-left,.side-right{
+  writing-mode:vertical-rl;text-orientation:mixed;
+  font-family:'Bebas Neue',sans-serif;letter-spacing:6px;
+  position:fixed;top:50%;z-index:10;user-select:none;
+  pointer-events:none;
+}
+.side-left{
+  left:0;transform:translateY(-50%) rotate(180deg);
+  font-size:clamp(32px,4.5vw,62px);
+  color:transparent;-webkit-text-stroke:2px var(--green);
+  text-shadow:0 0 30px #00c96a22;
+  animation:sloganGlow 4s ease-in-out infinite;
+  padding:16px 8px;letter-spacing:10px;
+}
+.side-right{
+  right:0;transform:translateY(-50%);
+  font-size:clamp(18px,2.4vw,36px);
+  color:transparent;-webkit-text-stroke:2px var(--gold);
+  text-shadow:0 0 30px #f0b00022;
+  animation:sloganGlow2 4s ease-in-out infinite 2s;
+  padding:16px 8px;letter-spacing:8px;
+}
+@keyframes sloganGlow{0%,100%{opacity:.35;text-shadow:0 0 15px #00c96a11}50%{opacity:1;text-shadow:0 0 35px #00c96a88,0 0 60px #00c96a33}}
+@keyframes sloganGlow2{0%,100%{opacity:.35;text-shadow:0 0 15px #f0b00011}50%{opacity:1;text-shadow:0 0 35px #f0b00088,0 0 60px #f0b00033}}
 
-    /* SHARED */
-    .page { display: none; }
-    .page.active { display: block; }
+/* ── MAIN WRAP ── */
+.app-main{margin:0 72px;}
+@media(max-width:600px){.app-main{margin:0 38px;}.side-left,.side-right{font-size:24px;padding:12px 5px;}}
 
-    /* ===================== TRACKER PAGE ===================== */
-    .tracker-wrap {
-      min-height: 100vh;
-      background: #f0f2f5;
-      color: #1a2332;
-      padding: 20px 24px 80px;
-    }
-    .content-grid {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 12px;
-    }
-    @media (min-width: 700px) {
-      .tracker-wrap { padding: 24px 32px 80px; }
-      .content-grid { grid-template-columns: 1fr 1fr; }
-      .content-grid .full-col { grid-column: 1 / -1; }
-    }
-    @media (min-width: 1100px) {
-      .tracker-wrap { padding: 28px 48px 80px; }
-      .content-grid { grid-template-columns: 1fr 1fr 1fr; }
-    }
-    .top-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
-    .brand { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 4px; color: #1a2332; }
-    .session-badge { font-size: 9px; letter-spacing: 2px; color: #9aa5b4; text-transform: uppercase; }
-    .health-card { background: #fff; border: 1px solid #dde1e7; border-radius: 8px; padding: 20px; margin-bottom: 12px; box-shadow: 0 1px 4px #00000008; }
-    .health-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 14px; }
-    .health-label { font-size: 8px; letter-spacing: 3px; color: #9aa5b4; text-transform: uppercase; }
-    .health-pct { font-family: 'Bebas Neue', sans-serif; font-size: 28px; letter-spacing: 2px; line-height: 1; }
-    .bar-track { height: 6px; background: #eef0f3; border-radius: 3px; overflow: hidden; margin-bottom: 10px; }
-    .bar-fill { height: 100%; border-radius: 3px; transition: width 0.5s cubic-bezier(0.4,0,0.2,1), background 0.3s; }
-    .health-sub { display: flex; justify-content: space-between; font-size: 9px; color: #9aa5b4; letter-spacing: 1px; }
-    .metrics-row { display: contents; }
-    .content-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
-    .metric { background: #fff; border: 1px solid #dde1e7; border-radius: 8px; padding: 14px 12px; text-align: center; box-shadow: 0 1px 4px #00000008; }
-    .metric-val { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 1px; line-height: 1; margin-bottom: 4px; }
-    .metric-label { font-size: 7px; letter-spacing: 2px; color: #9aa5b4; text-transform: uppercase; }
-    .risk-box { background: #fff; border: 1px solid #dde1e7; border-radius: 8px; padding: 18px 20px; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 1px 4px #00000008; }
-    .risk-label { font-size: 8px; letter-spacing: 3px; color: #6b7a8d; text-transform: uppercase; margin-bottom: 4px; }
-    .risk-amount { font-family: 'Bebas Neue', sans-serif; font-size: 42px; color: #00b85c; letter-spacing: 2px; line-height: 1; }
-    .risk-formula { font-size: 10px; color: #9aa5b4; margin-top: 4px; letter-spacing: 1px; }
-    .risk-pool-label { font-size: 8px; letter-spacing: 2px; color: #9aa5b4; text-transform: uppercase; margin-bottom: 4px; }
-    .risk-pool-val { font-family: 'Bebas Neue', sans-serif; font-size: 20px; color: #1a2332; letter-spacing: 1px; }
-    .add-section { background: #fff; border: 1px solid #dde1e7; border-radius: 8px; padding: 18px 20px; margin-bottom: 12px; box-shadow: 0 1px 4px #00000008; }
-    .section-title { font-size: 8px; letter-spacing: 3px; color: #9aa5b4; text-transform: uppercase; margin-bottom: 14px; }
-    .input-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
-    .input-group { display: flex; flex-direction: column; gap: 5px; }
-    .input-label { font-size: 8px; letter-spacing: 2px; color: #6b7a8d; text-transform: uppercase; }
-    .tinput, .tselect {
-      background: #f5f7fa; border: 1px solid #dde1e7; border-radius: 6px;
-      padding: 9px 12px; color: #1a2332; font-family: 'DM Mono', monospace;
-      font-size: 13px; outline: none; transition: border-color 0.2s; width: 100%;
-    }
-    .tinput:focus, .tselect:focus { border-color: #00b85c88; background: #fff; }
-    .tinput::placeholder { color: #c5cdd8; }
-    .tselect option { background: #fff; color: #1a2332; }
-    .full-width { grid-column: 1 / -1; }
-    .add-btn {
-      width: 100%; background: #00b85c; border: none;
-      border-radius: 6px; padding: 12px; color: #fff;
-      font-family: 'Bebas Neue', sans-serif; font-size: 16px; letter-spacing: 3px;
-      cursor: pointer; transition: background 0.2s; margin-top: 4px;
-    }
-    .add-btn:hover { background: #009e4f; }
-    .log-section { background: #fff; border: 1px solid #dde1e7; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 4px #00000008; }
-    .log-header { padding: 14px 20px; border-bottom: 1px solid #eef0f3; display: flex; justify-content: space-between; align-items: center; }
-    .clear-btn { font-size: 8px; letter-spacing: 2px; color: #9aa5b4; background: none; border: none; cursor: pointer; font-family: 'DM Mono', monospace; text-transform: uppercase; }
-    .clear-btn:hover { color: #e03a52; }
-    .trade-row { display: grid; grid-template-columns: 28px 1fr auto auto; gap: 10px; align-items: center; padding: 11px 20px; border-bottom: 1px solid #eef0f3; }
-    .trade-row:last-child { border-bottom: none; }
-    .trade-num { font-size: 9px; color: #9aa5b4; text-align: center; }
-    .trade-name { font-size: 12px; color: #1a2332; margin-bottom: 2px; }
-    .trade-meta { font-size: 9px; color: #9aa5b4; letter-spacing: 1px; }
-    .trade-pnl { font-family: 'Bebas Neue', sans-serif; font-size: 16px; letter-spacing: 1px; text-align: right; }
-    .trade-del { background: none; border: none; color: #c5cdd8; cursor: pointer; font-size: 14px; transition: color 0.2s; }
-    .trade-del:hover { color: #e03a52; }
-    .empty-log { padding: 30px 20px; text-align: center; font-size: 10px; color: #c5cdd8; letter-spacing: 2px; text-transform: uppercase; }
-    .danger-banner { background: #fff0f3; border: 1px solid #e03a5233; border-radius: 8px; padding: 12px 16px; margin-bottom: 12px; font-size: 10px; color: #e03a52; letter-spacing: 1px; }
-    .green { color: #00b85c; } .red { color: #e03a52; } .white { color: #1a2332; }
+/* ── ANIMATIONS ── */
+@keyframes printOut{0%{transform:translateY(-110%) scaleY(0);opacity:0}55%{opacity:1}100%{transform:translateY(80px) scaleY(1);opacity:0}}
+@keyframes floatUp{0%{transform:translateY(0) rotate(-10deg);opacity:.9}100%{transform:translateY(-110px) rotate(14deg);opacity:0}}
+@keyframes floatUpR{0%{transform:translateY(0) rotate(8deg);opacity:.9}100%{transform:translateY(-95px) rotate(-16deg);opacity:0}}
+@keyframes ticker{0%{transform:translateX(100%)}100%{transform:translateX(-200%)}}
+@keyframes gearSpin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+@keyframes gearRev{from{transform:rotate(0deg)}to{transform:rotate(-360deg)}}
+@keyframes pulseDot{0%,100%{opacity:.4;transform:scale(1)}50%{opacity:1;transform:scale(1.4)}}
+@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+@keyframes winFlash{0%{background:var(--card)}30%{background:#0a2a18}100%{background:var(--card)}}
+@keyframes lossFlash{0%{background:var(--card)}30%{background:#2a0a12}100%{background:var(--card)}}
+@keyframes stackIn{0%{transform:translateY(14px) scale(.92);opacity:0}100%{transform:translateY(0) scale(1);opacity:1}}
+@keyframes moneyDrift{0%{opacity:.7;transform:translateY(-10px) rotate(var(--r))}100%{opacity:0;transform:translateY(90px) rotate(calc(var(--r) + 25deg))}}
+@keyframes scanLine{0%{top:-5%}100%{top:105%}}
+@keyframes counterPop{0%{transform:scale(.8);opacity:0}60%{transform:scale(1.08)}100%{transform:scale(1);opacity:1}}
 
-    /* ── MONEY MACHINE GRAPHICS ── */
-    @keyframes roll { 0%{transform:translateY(0)} 100%{transform:translateY(-40px)} }
-    @keyframes printOut { 0%{transform:translateY(-100%) scaleY(0);opacity:0} 60%{opacity:1} 100%{transform:translateY(60px) scaleY(1);opacity:0} }
-    @keyframes coinSpin { 0%{transform:rotateY(0deg)} 100%{transform:rotateY(360deg)} }
-    @keyframes floatUp { 0%{transform:translateY(0) rotate(-10deg);opacity:1} 100%{transform:translateY(-120px) rotate(15deg);opacity:0} }
-    @keyframes floatUpR { 0%{transform:translateY(0) rotate(8deg);opacity:1} 100%{transform:translateY(-100px) rotate(-12deg);opacity:0} }
-    @keyframes ticker { 0%{transform:translateX(100%)} 100%{transform:translateX(-100%)} }
-    @keyframes pulse-green { 0%,100%{box-shadow:0 0 0 0 #00b85c44} 50%{box-shadow:0 0 0 8px #00b85c00} }
-    @keyframes gear-spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
-    @keyframes gear-spin-rev { from{transform:rotate(0deg)} to{transform:rotate(-360deg)} }
-    @keyframes bill-slide { 0%{transform:translateX(-110%) skewX(-2deg);opacity:0} 20%{opacity:1} 80%{opacity:1} 100%{transform:translateX(110%) skewX(2deg);opacity:0} }
-    @keyframes shimmer { 0%{background-position:-200% 0} 100%{background-position:200% 0} }
-    @keyframes bounce-coin { 0%,100%{transform:translateY(0) scale(1)} 40%{transform:translateY(-8px) scale(1.1)} 60%{transform:translateY(-4px) scale(1.05)} }
-    @keyframes win-flash { 0%{background:#f0faf5} 30%{background:#c8f5dc} 100%{background:#f0faf5} }
-    @keyframes loss-flash { 0%{background:#fff} 30%{background:#fff0f3} 100%{background:#fff} }
-    @keyframes stack-in { 0%{transform:translateY(20px) scale(0.8);opacity:0} 100%{transform:translateY(0) scale(1);opacity:1} }
+/* ── HEADER ── */
+.machine-header{
+  position:relative;
+  background:linear-gradient(160deg,#0d1828 0%,#111f34 50%,#0d1828 100%);
+  border-bottom:2px solid #00c96a44;
+  overflow:hidden;padding:16px 20px 18px;
+}
+.machine-header::after{
+  content:'';position:absolute;top:0;left:0;right:0;bottom:0;
+  background:repeating-linear-gradient(0deg,transparent,transparent 2px,#00c96a04 2px,#00c96a04 4px);
+  pointer-events:none;
+}
+.scan-line{
+  position:absolute;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,transparent,#00c96a44,transparent);
+  animation:scanLine 3s linear infinite;pointer-events:none;z-index:3;
+}
+.header-ticker{
+  position:absolute;bottom:0;left:0;right:0;height:20px;
+  background:#00c96a;overflow:hidden;display:flex;align-items:center;
+}
+.ticker-txt{
+  white-space:nowrap;font-size:9px;letter-spacing:2px;color:#000;
+  font-family:'Bebas Neue',sans-serif;
+  animation:ticker 22s linear infinite;padding-right:80px;
+}
+.hd-body{display:flex;align-items:center;justify-content:space-between;position:relative;z-index:2;padding-bottom:22px;}
+.hd-machine{display:flex;align-items:center;gap:12px;}
+.gear-wrap{position:relative;width:50px;height:50px;flex-shrink:0;}
+.g-big{position:absolute;top:0;left:0;animation:gearSpin 3.5s linear infinite;transform-origin:center;}
+.g-sm{position:absolute;bottom:-4px;right:-4px;animation:gearRev 2.2s linear infinite;transform-origin:center;}
+.printer-box{
+  position:relative;width:88px;height:56px;
+  background:linear-gradient(180deg,#0a1828 0%,#060f1e 100%);
+  border:1px solid #1e3a5a;border-radius:7px;overflow:hidden;
+  display:flex;align-items:center;justify-content:center;
+}
+.printer-screen{
+  position:absolute;top:7px;left:50%;transform:translateX(-50%);
+  width:60px;height:16px;background:#020a14;border-radius:3px;
+  border:1px solid #0a2040;display:flex;align-items:center;justify-content:center;
+  font-family:'Bebas Neue',sans-serif;font-size:9px;color:#00c96a;letter-spacing:2px;
+}
+.printer-lights{display:flex;gap:4px;position:absolute;top:8px;right:8px;}
+.plight{width:5px;height:5px;border-radius:50%;}
+.plight.g{background:var(--green);box-shadow:0 0 6px var(--green);animation:pulseDot 1.1s ease-in-out infinite;}
+.plight.y{background:var(--gold);box-shadow:0 0 6px var(--gold);animation:pulseDot 1.1s ease-in-out infinite .37s;}
+.plight.r{background:var(--red);box-shadow:0 0 6px var(--red);animation:pulseDot 1.1s ease-in-out infinite .74s;}
+.printer-slot{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);width:62px;height:4px;background:#010810;border-radius:2px;}
+.bill-out{
+  position:absolute;bottom:6px;left:50%;transform:translateX(-50%);
+  width:54px;height:24px;border-radius:3px;
+  background:linear-gradient(135deg,#0f4a28,#00c96a,#0f4a28);
+  border:1px solid #00c96a66;
+  animation:printOut 2.2s ease-in-out infinite;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Bebas Neue',sans-serif;font-size:10px;color:#fff;letter-spacing:1px;
+}
+.bill-out2{animation-delay:1.1s;}
+.hd-title{text-align:center;flex:1;}
+.hd-title .main{font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:7px;color:var(--green);line-height:1;text-shadow:0 0 20px #00c96a55;}
+.hd-title .sub{font-size:8px;letter-spacing:3px;color:var(--text2);margin-top:3px;text-transform:uppercase;}
+.float-bills{position:absolute;right:18px;top:6px;display:flex;gap:10px;z-index:1;}
+.fbill{font-size:18px;opacity:.6;}
+.fbill:nth-child(1){animation:floatUp 3.2s ease-in infinite;}
+.fbill:nth-child(2){animation:floatUpR 3.2s ease-in infinite .9s;}
+.fbill:nth-child(3){animation:floatUp 3.2s ease-in infinite 1.7s;}
+.fbill:nth-child(4){animation:floatUpR 3.2s ease-in infinite .4s;}
 
-    .money-machine-wrap {
-      position: relative;
-      overflow: hidden;
-      background: linear-gradient(135deg, #0a1628 0%, #0d1f3c 50%, #091420 100%);
-      border-bottom: 2px solid #00b85c44;
-      padding: 16px 20px 12px;
-    }
-    .ticker-tape {
-      position: absolute;
-      bottom: 0; left: 0; right: 0;
-      height: 18px;
-      background: #00b85c;
-      overflow: hidden;
-      display: flex;
-      align-items: center;
-    }
-    .ticker-text {
-      white-space: nowrap;
-      font-family: 'DM Mono', monospace;
-      font-size: 8px;
-      letter-spacing: 2px;
-      color: #fff;
-      animation: ticker 18s linear infinite;
-      padding-right: 60px;
-    }
-    .machine-body {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      position: relative;
-      z-index: 2;
-    }
-    .machine-left { display:flex; align-items:center; gap:14px; }
-    .machine-title { color:#fff; }
-    .machine-title .main { font-family:'Bebas Neue',sans-serif; font-size:22px; letter-spacing:6px; color:#00b85c; line-height:1; }
-    .machine-title .sub { font-size:8px; letter-spacing:3px; color:#4a6a8a; margin-top:2px; text-transform:uppercase; }
+/* ── TRACKER WRAP ── */
+.tracker-wrap{
+  min-height:100vh;background:var(--bg);
+  color:var(--text);padding:18px 20px 80px;
+  position:relative;
+}
+.tracker-wrap::before{
+  content:'';position:fixed;top:0;left:0;right:0;bottom:0;
+  background:radial-gradient(ellipse at 50% 0%,#00c96a0c 0%,transparent 65%),
+             radial-gradient(ellipse at 100% 100%,#f0b0000a 0%,transparent 50%);
+  pointer-events:none;z-index:0;
+}
+.tracker-wrap > *{position:relative;z-index:1;}
 
-    .gear-group { position:relative; width:48px; height:48px; }
-    .gear-big { position:absolute; top:0; left:0; animation: gear-spin 4s linear infinite; transform-origin:center; }
-    .gear-sm { position:absolute; bottom:0; right:0; animation: gear-spin-rev 2.5s linear infinite; transform-origin:center; }
+/* ── CARDS ── */
+.dark-card{background:var(--card);border:1px solid var(--border);border-radius:10px;box-shadow:0 4px 20px #00000044;}
+.dark-card-hover:hover{border-color:var(--border2);box-shadow:0 4px 24px #00000066;}
 
-    .bill-machine {
-      position: relative;
-      width: 90px;
-      height: 52px;
-      background: linear-gradient(180deg, #1a2d4a 0%, #0f1e35 100%);
-      border: 1px solid #2a4060;
-      border-radius: 6px;
-      overflow: hidden;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .bill-slot {
-      position: absolute;
-      bottom: 8px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 60px;
-      height: 4px;
-      background: #0a1020;
-      border-radius: 2px;
-      box-shadow: inset 0 1px 3px #000;
-    }
-    .bill-out {
-      position: absolute;
-      bottom: 4px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 52px;
-      height: 22px;
-      background: linear-gradient(135deg, #1a6b3a, #00b85c, #1a6b3a);
-      border-radius: 2px;
-      border: 1px solid #00b85c88;
-      animation: printOut 2.4s ease-in-out infinite;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-family: 'Bebas Neue', sans-serif;
-      font-size: 10px;
-      color: #fff;
-      letter-spacing: 1px;
-    }
-    .machine-lights {
-      display: flex;
-      gap: 4px;
-      position: absolute;
-      top: 8px;
-      left: 50%;
-      transform: translateX(-50%);
-    }
-    .mlight {
-      width: 5px; height: 5px;
-      border-radius: 50%;
-    }
-    .mlight.g { background:#00b85c; box-shadow:0 0 6px #00b85c; animation: pulse-green 1.2s ease-in-out infinite; }
-    .mlight.y { background:#f0a500; box-shadow:0 0 6px #f0a500; animation: pulse-green 1.2s ease-in-out infinite 0.4s; }
-    .mlight.r { background:#e03a52; box-shadow:0 0 6px #e03a52; animation: pulse-green 1.2s ease-in-out infinite 0.8s; }
+/* ── CONTENT GRID ── */
+.content-grid{display:grid;grid-template-columns:1fr;gap:12px;}
+@media(min-width:700px){.content-grid{grid-template-columns:1fr 1fr;}.content-grid .full-col{grid-column:1/-1;}}
+@media(min-width:1100px){.content-grid{grid-template-columns:1fr 1fr 1fr;}}
 
-    .float-coins {
-      position: absolute;
-      right: 20px; top: 4px;
-      display: flex;
-      gap: 8px;
-      z-index: 1;
-    }
-    .fcoin {
-      font-size: 16px;
-      opacity: 0.5;
-    }
-    .fcoin:nth-child(1) { animation: floatUp 3s ease-in infinite; }
-    .fcoin:nth-child(2) { animation: floatUp 3s ease-in infinite 1s; }
-    .fcoin:nth-child(3) { animation: floatUpR 3s ease-in infinite 0.5s; }
-    .fcoin:nth-child(4) { animation: floatUp 3s ease-in infinite 1.8s; }
+/* ── HEALTH BAR ── */
+.health-card{padding:20px;margin-bottom:0;}
+.health-header{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:14px;}
+.health-label{font-size:8px;letter-spacing:3px;color:var(--text2);text-transform:uppercase;}
+.health-pct{font-family:'Bebas Neue',sans-serif;font-size:30px;letter-spacing:2px;line-height:1;}
+.bar-track{height:8px;background:#0a1528;border-radius:4px;overflow:hidden;margin-bottom:10px;border:1px solid var(--border);}
+.bar-fill{height:100%;border-radius:4px;transition:width .5s cubic-bezier(.4,0,.2,1),background .3s;}
+.health-sub{display:flex;justify-content:space-between;font-size:9px;color:var(--text2);letter-spacing:1px;}
 
-    .win-row-anim { animation: win-flash 1s ease forwards; }
-    .loss-row-anim { animation: loss-flash 1s ease forwards; }
+/* ── METRICS ── */
+.metric{padding:16px 12px;text-align:center;}
+.metric-val{font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:1px;line-height:1;margin-bottom:4px;}
+.metric-label{font-size:7px;letter-spacing:2px;color:var(--text2);text-transform:uppercase;}
 
-    .shimmer-btn {
-      background: linear-gradient(90deg, #00b85c 0%, #00d96a 40%, #00b85c 60%, #009e4f 100%);
-      background-size: 200% 100%;
-      animation: shimmer 2.5s linear infinite;
-    }
-    .payout-shimmer {
-      background: linear-gradient(90deg, #d4930a 0%, #f0c040 40%, #f0a500 60%, #d4930a 100%);
-      background-size: 200% 100%;
-      animation: shimmer 2.5s linear infinite;
-    }
-    .stack-in { animation: stack-in 0.35s cubic-bezier(0.34,1.56,0.64,1) forwards; }
-  </style>
+/* ── RISK BOX ── */
+.risk-box{padding:24px 20px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;}
+.risk-label{font-size:8px;letter-spacing:3px;color:var(--text2);text-transform:uppercase;margin-bottom:6px;}
+.risk-amount{font-family:'Bebas Neue',sans-serif;font-size:56px;color:var(--green);letter-spacing:2px;line-height:1;text-shadow:0 0 24px #00c96a55;}
+.risk-formula{font-size:10px;color:var(--text2);margin-top:6px;letter-spacing:1px;}
+.risk-pool-label{font-size:8px;letter-spacing:2px;color:var(--text2);text-transform:uppercase;margin-bottom:4px;margin-top:14px;}
+.risk-pool-val{font-family:'Bebas Neue',sans-serif;font-size:24px;color:var(--text);letter-spacing:1px;}
+
+/* ── FORMS ── */
+.section-lbl{font-size:8px;letter-spacing:3px;color:var(--text2);text-transform:uppercase;margin-bottom:14px;}
+.input-group{display:flex;flex-direction:column;gap:5px;}
+.input-label{font-size:8px;letter-spacing:2px;color:var(--text2);text-transform:uppercase;}
+.tinput,.tselect{
+  background:#0f1c2e;border:1px solid var(--border);border-radius:7px;
+  padding:11px 14px;color:var(--text);font-family:'DM Mono',monospace;
+  font-size:13px;outline:none;transition:border-color .2s,box-shadow .2s;width:100%;
+}
+.tinput:focus,.tselect:focus{border-color:var(--green);box-shadow:0 0 0 3px #00c96a18;}
+.tinput::placeholder{color:var(--text3);}
+.tselect option{background:#0d1525;color:var(--text);}
+.add-btn{
+  width:100%;border:none;border-radius:7px;padding:14px;color:#000;
+  font-family:'Bebas Neue',sans-serif;font-size:17px;letter-spacing:3px;
+  cursor:pointer;transition:all .2s;margin-top:4px;font-weight:900;
+}
+.shimmer-btn{
+  background:linear-gradient(90deg,#00c96a 0%,#00ff84 40%,#00c96a 60%,#009e50 100%);
+  background-size:200% 100%;animation:shimmer 2.5s linear infinite;
+}
+.shimmer-btn:hover{filter:brightness(1.15);}
+.payout-shimmer{
+  background:linear-gradient(90deg,#c89000 0%,#ffd040 40%,#f0b000 60%,#c89000 100%);
+  background-size:200% 100%;animation:shimmer 2.5s linear infinite;
+}
+
+/* ── JOURNAL / LOG ── */
+.log-section{overflow:hidden;}
+.log-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;}
+.clear-btn{font-size:8px;letter-spacing:2px;color:var(--text2);background:none;border:none;cursor:pointer;font-family:'DM Mono',monospace;text-transform:uppercase;}
+.clear-btn:hover{color:var(--red);}
+.empty-log{padding:32px 20px;text-align:center;font-size:10px;color:var(--text3);letter-spacing:2px;text-transform:uppercase;}
+.win-row-anim{animation:winFlash 1s ease forwards;}
+.loss-row-anim{animation:lossFlash 1s ease forwards;}
+.trade-del{background:none;border:none;color:var(--text3);cursor:pointer;font-size:15px;transition:color .2s;}
+.trade-del:hover{color:var(--red);}
+
+/* ── MISC ── */
+.green{color:var(--green);}
+.red{color:var(--red);}
+.danger-banner{background:#1a0810;border:1px solid #f0406044;border-radius:8px;padding:12px 16px;margin-bottom:12px;font-size:10px;color:var(--red);letter-spacing:1px;}
+
+/* ── MONEY PRINTER CORNER GRAPHICS ── */
+.corner-printer{position:fixed;bottom:20px;opacity:.08;pointer-events:none;z-index:0;font-size:80px;animation:floatUp 6s ease-in-out infinite;}
+.corner-left{left:60px;animation-delay:0s;}
+.corner-right{right:60px;animation-delay:3s;}
+</style>
 </head>
 <body>
 
+<!-- SIDE SLOGANS -->
+<div class="side-left">TOLD YALL</div>
+<div class="side-right">PUT SOME RESPECT ON MY NAME</div>
+
+<!-- CORNER MONEY PRINTERS -->
+<div class="corner-printer corner-left">🖨️</div>
+<div class="corner-printer corner-right">💵</div>
+
+<div class="app-main">
 <div id="root"></div>
+</div>
 
 <script type="text/babel">
-const { useState, useEffect, useMemo } = React;
+const { useState, useMemo } = React;
 
-// ─────────────────────────────────────────────
-// PROP TRACKER
-// ─────────────────────────────────────────────
 const DIVISOR = 7;
-
 const INSTRUMENTS = {
-  MNQ: { name: 'MNQ', label: 'Micro Nasdaq', tickValue: 0.50, tickSize: 0.25, defaultTicks: 40 },
-  MGC: { name: 'MGC', label: 'Micro Gold',   tickValue: 1.00, tickSize: 0.10, defaultTicks: 25 },
+  MNQ:{ name:'MNQ', label:'Micro Nasdaq', tickValue:.5,  tickSize:.25, defaultTicks:40 },
+  MGC:{ name:'MGC', label:'Micro Gold',   tickValue:1.0, tickSize:.10, defaultTicks:25 },
 };
 
-function GearSVG({size, color}) {
-  const r = size/2, teeth = 8, ir = r*0.55, tr = r*0.85, tw = 0.28;
-  let d = '';
+/* ─── GEAR SVG ─── */
+function GearSVG({size,color}){
+  const r=size/2,teeth=8,ir=r*.55,tr=r*.85,tw=.28;
+  let d='';
   for(let i=0;i<teeth;i++){
     const a0=(i*2*Math.PI/teeth)-Math.PI/teeth;
-    const a1=a0+tw; const a2=a0+Math.PI/teeth-tw; const a3=a0+Math.PI/teeth;
+    const a1=a0+tw,a2=a0+Math.PI/teeth-tw,a3=a0+Math.PI/teeth;
     d+=`L${r+tr*Math.cos(a0)} ${r+tr*Math.sin(a0)} L${r+tr*Math.cos(a1)} ${r+tr*Math.sin(a1)} `;
     d+=`L${r+r*Math.cos(a2)} ${r+r*Math.sin(a2)} L${r+r*Math.cos(a3)} ${r+r*Math.sin(a3)} `;
   }
-  return (
+  return(
     <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-      <path d={`M${r+tr} ${r} ${d}Z`} fill={color} opacity="0.9"/>
-      <circle cx={r} cy={r} r={ir} fill="#0a1628"/>
-      <circle cx={r} cy={r} r={ir*0.4} fill={color} opacity="0.6"/>
+      <path d={`M${r+tr} ${r} ${d}Z`} fill={color} opacity=".9"/>
+      <circle cx={r} cy={r} r={ir} fill="#04091a"/>
+      <circle cx={r} cy={r} r={ir*.38} fill={color} opacity=".5"/>
     </svg>
   );
 }
 
-function MoneyMachineHeader() {
-  return (
-    <div className="money-machine-wrap">
-      <div className="float-coins">
-        <span className="fcoin">💵</span>
-        <span className="fcoin">🪙</span>
-        <span className="fcoin">💰</span>
-        <span className="fcoin">💵</span>
+/* ─── MONEY MACHINE HEADER ─── */
+function MoneyMachineHeader(){
+  return(
+    <div className="machine-header">
+      <div className="scan-line"/>
+      <div className="float-bills">
+        <span className="fbill">💵</span>
+        <span className="fbill">🪙</span>
+        <span className="fbill">💵</span>
+        <span className="fbill">💰</span>
       </div>
-      <div className="machine-body">
-        <div className="machine-left">
-          <div className="gear-group">
-            <div className="gear-big"><GearSVG size={32} color="#00b85c"/></div>
-            <div className="gear-sm" style={{bottom:-2,right:-2}}><GearSVG size={20} color="#f0a500"/></div>
+      <div className="hd-body">
+        {/* LEFT MACHINE */}
+        <div className="hd-machine">
+          <div className="gear-wrap">
+            <div className="g-big"><GearSVG size={34} color="#00c96a"/></div>
+            <div className="g-sm"><GearSVG size={21} color="#f0b000"/></div>
           </div>
-          <div className="bill-machine">
-            <div className="machine-lights">
-              <div className="mlight g"/><div className="mlight y"/><div className="mlight r"/>
+          <div className="printer-box">
+            <div className="printer-screen">$$$</div>
+            <div className="printer-lights">
+              <div className="plight g"/><div className="plight y"/><div className="plight r"/>
             </div>
-            <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:'9px',letterSpacing:'2px',color:'#4a6a8a',marginTop:'6px'}}>$$</div>
-            <div className="bill-slot"/>
+            <div className="printer-slot"/>
             <div className="bill-out">$$$</div>
           </div>
-        </div>
-        <div className="machine-title" style={{textAlign:'center',flex:1}}>
-          <div className="main">FW WALKAWAY</div>
-          <div className="sub">Prop Tracker · Money Machine</div>
-        </div>
-        <div className="machine-left" style={{flexDirection:'row-reverse'}}>
-          <div className="gear-group">
-            <div className="gear-big"><GearSVG size={32} color="#00b85c"/></div>
-            <div className="gear-sm" style={{bottom:-2,left:-2,right:'auto'}}><GearSVG size={20} color="#f0a500"/></div>
+          <div className="gear-wrap">
+            <div className="g-big"><GearSVG size={28} color="#f0b000"/></div>
+            <div className="g-sm"><GearSVG size={18} color="#00c96a"/></div>
           </div>
-          <div className="bill-machine">
-            <div className="machine-lights">
-              <div className="mlight r"/><div className="mlight y"/><div className="mlight g"/>
+        </div>
+
+        {/* CENTER TITLE */}
+        <div className="hd-title">
+          {/* Avatar row */}
+          <div style={{display:'flex',justifyContent:'center',alignItems:'flex-end',gap:'6px',marginBottom:'8px'}}>
+            {/* Woman 1 - natural hair */}
+            <svg width="38" height="48" viewBox="0 0 38 48" fill="none">
+              <ellipse cx="19" cy="14" rx="9" ry="10" fill="#3d1f0a"/>
+              <path d="M10 12 Q7 4 14 3 Q19 1 24 3 Q31 4 28 12 Q26 6 19 6 Q12 6 10 12Z" fill="#1a0a00"/>
+              <path d="M8 14 Q6 10 10 8 Q8 16 10 20Z" fill="#1a0a00"/>
+              <path d="M30 14 Q32 10 28 8 Q30 16 28 20Z" fill="#1a0a00"/>
+              <ellipse cx="19" cy="34" rx="11" ry="13" fill="#8B4513"/>
+              <rect x="12" y="28" width="14" height="18" rx="3" fill="#c0392b"/>
+              <ellipse cx="19" cy="14" rx="9" ry="10" fill="#3d1f0a"/>
+              <circle cx="16" cy="13" r="1.2" fill="#1a0a00"/>
+              <circle cx="22" cy="13" r="1.2" fill="#1a0a00"/>
+              <path d="M16 17 Q19 19 22 17" stroke="#1a0a00" strokeWidth="1" fill="none"/>
+              <ellipse cx="15.5" cy="13.5" r=".5" fill="#fff"/>
+              <ellipse cx="21.5" cy="13.5" r=".5" fill="#fff"/>
+            </svg>
+            {/* Man 1 - fade cut */}
+            <svg width="36" height="50" viewBox="0 0 36 50" fill="none">
+              <ellipse cx="18" cy="13" rx="9" ry="9.5" fill="#2c0f05"/>
+              <path d="M9 13 Q9 6 18 5 Q27 6 27 13 Q27 8 18 8 Q9 8 9 13Z" fill="#0a0500"/>
+              <ellipse cx="18" cy="32" rx="11" ry="14" fill="#6B3410"/>
+              <rect x="11" y="27" width="14" height="20" rx="3" fill="#1a3a5c"/>
+              <ellipse cx="18" cy="13" rx="9" ry="9.5" fill="#2c0f05"/>
+              <circle cx="15" cy="12" r="1.2" fill="#0a0500"/>
+              <circle cx="21" cy="12" r="1.2" fill="#0a0500"/>
+              <path d="M15 16.5 Q18 18.5 21 16.5" stroke="#0a0500" strokeWidth="1" fill="none"/>
+              <ellipse cx="14.5" cy="12.5" r=".5" fill="#fff"/>
+              <ellipse cx="20.5" cy="12.5" r=".5" fill="#fff"/>
+              <rect x="11" y="22" width="14" height="7" rx="2" fill="#2c0f05"/>
+            </svg>
+            {/* FW WALKAWAY title in middle */}
+            <div style={{textAlign:'center',padding:'0 8px'}}>
+              <div className="main">FW WALKAWAY</div>
+              <div className="sub">Prop Tracker · Money Machine · Let It Print</div>
             </div>
-            <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:'9px',letterSpacing:'2px',color:'#4a6a8a',marginTop:'6px'}}>$$</div>
-            <div className="bill-slot"/>
-            <div className="bill-out" style={{animationDelay:'1.2s'}}>$$$</div>
+            {/* Woman 2 - braids */}
+            <svg width="36" height="50" viewBox="0 0 36 50" fill="none">
+              <ellipse cx="18" cy="13" rx="9" ry="9.5" fill="#1a0800"/>
+              <path d="M10 10 Q12 2 18 2 Q24 2 26 10" fill="#0a0300" stroke="#0a0300" strokeWidth="1"/>
+              <line x1="14" y1="2" x2="12" y2="38" stroke="#0a0300" strokeWidth="1.5"/>
+              <line x1="18" y1="1" x2="16" y2="38" stroke="#0a0300" strokeWidth="1.5"/>
+              <line x1="22" y1="2" x2="22" y2="38" stroke="#0a0300" strokeWidth="1.5"/>
+              <ellipse cx="18" cy="13" rx="9" ry="9.5" fill="#1a0800"/>
+              <ellipse cx="18" cy="32" rx="11" ry="14" fill="#4a1a08"/>
+              <rect x="11" y="27" width="14" height="20" rx="3" fill="#8B0000"/>
+              <circle cx="15" cy="12" r="1.2" fill="#0a0300"/>
+              <circle cx="21" cy="12" r="1.2" fill="#0a0300"/>
+              <path d="M15 16.5 Q18 18.5 21 16.5" stroke="#0a0300" strokeWidth="1" fill="none"/>
+              <ellipse cx="14.5" cy="12.5" r=".5" fill="#fff"/>
+              <ellipse cx="20.5" cy="12.5" r=".5" fill="#fff"/>
+            </svg>
+            {/* Man 2 - suit */}
+            <svg width="38" height="48" viewBox="0 0 38 48" fill="none">
+              <ellipse cx="19" cy="13" rx="9" ry="9.5" fill="#3a1505"/>
+              <path d="M10 13 Q10 5 19 4 Q28 5 28 13 Q28 8 19 8 Q10 8 10 13Z" fill="#1a0800"/>
+              <ellipse cx="19" cy="32" rx="12" ry="14" fill="#5a2510"/>
+              <rect x="12" y="27" width="14" height="20" rx="2" fill="#1a1a2e"/>
+              <path d="M19 27 L16 32 L19 30 L22 32 Z" fill="#fff"/>
+              <rect x="18" y="30" width="2" height="10" fill="#1a1a2e"/>
+              <ellipse cx="19" cy="13" rx="9" ry="9.5" fill="#3a1505"/>
+              <circle cx="16" cy="12" r="1.2" fill="#1a0800"/>
+              <circle cx="22" cy="12" r="1.2" fill="#1a0800"/>
+              <path d="M16 16.5 Q19 18.5 22 16.5" stroke="#1a0800" strokeWidth="1" fill="none"/>
+              <ellipse cx="15.5" cy="12.5" r=".5" fill="#fff"/>
+              <ellipse cx="21.5" cy="12.5" r=".5" fill="#fff"/>
+            </svg>
+          </div>
+        </div>
+
+        {/* RIGHT MACHINE */}
+        <div className="hd-machine" style={{flexDirection:'row-reverse'}}>
+          <div className="gear-wrap">
+            <div className="g-big"><GearSVG size={34} color="#00c96a"/></div>
+            <div className="g-sm"><GearSVG size={21} color="#f0b000"/></div>
+          </div>
+          <div className="printer-box">
+            <div className="printer-screen">$$$</div>
+            <div className="printer-lights">
+              <div className="plight r"/><div className="plight y"/><div className="plight g"/>
+            </div>
+            <div className="printer-slot"/>
+            <div className="bill-out bill-out2">$$$</div>
+          </div>
+          <div className="gear-wrap">
+            <div className="g-big"><GearSVG size={28} color="#f0b000"/></div>
+            <div className="g-sm"><GearSVG size={18} color="#00c96a"/></div>
           </div>
         </div>
       </div>
-      <div className="ticker-tape">
-        <div className="ticker-text">
-          📈 MNQ · MGC · MICRO FUTURES · PROP TRADING · FW WALKAWAY · RISK MANAGED · STAY DISCIPLINED · PROTECT THE POOL · LET IT PRINT · 📈 MNQ · MGC · MICRO FUTURES · PROP TRADING · FW WALKAWAY · RISK MANAGED · STAY DISCIPLINED · PROTECT THE POOL · LET IT PRINT ·&nbsp;
+
+      {/* TICKER TAPE */}
+      <div className="header-ticker">
+        <div className="ticker-txt">
+          📈 MNQ · MGC · MICRO FUTURES · TOLD YALL · FW WALKAWAY · PROTECT THE POOL · LET IT PRINT · PUT SOME RESPECT ON MY NAME · RISK MANAGED · STAY DISCIPLINED · COMPOUND THE GAINS · 📈 MNQ · MGC · MICRO FUTURES · TOLD YALL · FW WALKAWAY · PROTECT THE POOL · LET IT PRINT · PUT SOME RESPECT ON MY NAME ·&nbsp;
         </div>
       </div>
     </div>
   );
 }
 
-function TrackerPage() {
-  const [trades, setTrades] = useState([]);
-  const [form, setForm] = useState({ label: '', pnl: '', outcome: 'win' });
-  const [balance, setBalance] = useState('');
-  const [drawdown, setDrawdown] = useState('');
-  const [instrument, setInstrument] = useState('MNQ');
-  const [payouts, setPayouts] = useState([]);
-  const [payoutForm, setPayoutForm] = useState({ label: '', amount: '' });
-  const [showPayouts, setShowPayouts] = useState(false);
-  const [lastAdded, setLastAdded] = useState(null);
+/* ─── WEEKLY CHART ─── */
+function WeeklyChart({trades}){
+  const weeks = useMemo(()=>{
+    if(!trades.length) return [];
+    const byWeek={};
+    trades.forEach(t=>{
+      const d=new Date(t.id);
+      const jan1=new Date(d.getFullYear(),0,1);
+      const wk=Math.ceil(((d-jan1)/86400000+jan1.getDay()+1)/7);
+      const key=`W${wk}`;
+      byWeek[key]=(byWeek[key]||0)+t.pnl;
+    });
+    return Object.entries(byWeek).map(([k,v])=>({week:k,pnl:v})).slice(-8);
+  },[trades]);
+
+  if(!weeks.length) return(
+    <div className="dark-card" style={{padding:'24px 20px',textAlign:'center'}}>
+      <div style={{fontSize:'32px',marginBottom:'8px'}}>📈</div>
+      <div style={{fontSize:'10px',color:'var(--text3)',letterSpacing:'2px',textTransform:'uppercase'}}>Log trades to see weekly P&L chart</div>
+    </div>
+  );
+
+  const maxVal=Math.max(...weeks.map(w=>Math.abs(w.pnl)),1);
+  const chartH=130,barW=44,gap=62;
+  const total=weeks.reduce((s,w)=>s+w.pnl,0);
+
+  return(
+    <div className="dark-card" style={{padding:'16px 20px'}}>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'14px'}}>
+        <div style={{fontSize:'8px',letterSpacing:'3px',color:'var(--text2)',textTransform:'uppercase'}}>📈 Weekly P&L</div>
+        <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:'18px',color:total>=0?'var(--green)':'var(--red)',letterSpacing:'1px',textShadow:total>=0?'0 0 12px #00c96a55':'0 0 12px #f0406055'}}>
+          {total>=0?'+':''}${Math.abs(total).toFixed(0)} total
+        </div>
+      </div>
+      <div style={{overflowX:'auto'}}>
+        <svg width={Math.max(320,weeks.length*gap+20)} height={chartH+48} style={{display:'block'}}>
+          {/* Grid lines */}
+          {[0,.25,.5,.75,1].map(p=>(
+            <line key={p} x1="0" y1={chartH-12-(p*(chartH-30))} x2={weeks.length*gap+20} y2={chartH-12-(p*(chartH-30))} stroke="#1e3050" strokeWidth=".5" strokeDasharray="4,4"/>
+          ))}
+          {weeks.map((w,i)=>{
+            const barH=Math.max(6,(Math.abs(w.pnl)/maxVal)*(chartH-28));
+            const isPos=w.pnl>=0;
+            const x=i*gap+8,baseline=chartH-12,y=isPos?baseline-barH:baseline;
+            return(
+              <g key={i}>
+                {/* Bar shadow */}
+                <rect x={x+2} y={y+2} width={barW} height={barH} rx="5" fill={isPos?'#00c96a22':'#f0406022'}/>
+                {/* Bar */}
+                <rect x={x} y={y} width={barW} height={barH} rx="5" fill={isPos?'#00c96a':'#f04060'} opacity=".9"/>
+                {/* Highlight */}
+                <rect x={x} y={isPos?y:y+barH-5} width={barW} height={5} rx="3" fill={isPos?'#00ff84':'#ff7090'} opacity=".5"/>
+                {/* Value label */}
+                <text x={x+barW/2} y={isPos?y-6:y+barH+14} textAnchor="middle"
+                  fontSize="9" fill={isPos?'#00c96a':'#f04060'}
+                  fontFamily="'DM Mono',monospace" fontWeight="500">
+                  {isPos?'+':''}{Math.abs(w.pnl)>=1000?`${(w.pnl/1000).toFixed(1)}k`:w.pnl.toFixed(0)}
+                </text>
+                {/* Week label */}
+                <text x={x+barW/2} y={chartH+34} textAnchor="middle"
+                  fontSize="9" fill="#3a5a80"
+                  fontFamily="'DM Mono',monospace">{w.week}</text>
+              </g>
+            );
+          })}
+          <line x1="0" y1={chartH-12} x2={weeks.length*gap+20} y2={chartH-12} stroke="#1e3050" strokeWidth="1.5"/>
+        </svg>
+      </div>
+    </div>
+  );
+}
+
+/* ─── TRACKER PAGE ─── */
+function TrackerPage(){
+  const [trades,setTrades]    = useState([]);
+  const [form,setForm]        = useState({label:'',pnl:'',outcome:'win'});
+  const [balance,setBalance]  = useState('');
+  const [drawdown,setDrawdown]= useState('');
+  const [instrument,setInstrument] = useState('MNQ');
+  const [payouts,setPayouts]  = useState([]);
+  const [payoutForm,setPayoutForm] = useState({label:'',amount:''});
+  const [showPayouts,setShowPayouts] = useState(false);
+  const [lastAdded,setLastAdded] = useState(null);
 
   const inst = INSTRUMENTS[instrument];
-  const startingDrawdown = parseFloat(drawdown) || 2500;
-  const startingBalance = parseFloat(balance) || 0;
+  const startingDrawdown = parseFloat(drawdown)||2500;
+  const startingBalance  = parseFloat(balance)||0;
 
-  const stats = useMemo(() => {
-    const totalPnl = trades.reduce((s, t) => s + t.pnl, 0);
-    const totalPayoutsAmt = payouts.reduce((s, p) => s + p.amount, 0);
-    const currentPool = Math.max(0, startingDrawdown + totalPnl - totalPayoutsAmt);
-    const riskPerTrade = currentPool / DIVISOR;
-    const poolPct = Math.min(100, Math.max(0, ((startingDrawdown + totalPnl) / startingDrawdown) * 100));
-    const wins = trades.filter(t => t.pnl > 0).length;
-    const losses = trades.filter(t => t.pnl < 0).length;
-    const winRate = trades.length ? Math.round((wins / trades.length) * 100) : 0;
-    const isBlownOut = totalPnl <= -startingDrawdown;
-    const remaining = startingDrawdown + totalPnl;
-    const currentBalance = startingBalance + totalPnl;
-    const netProfit = totalPnl - totalPayoutsAmt;
-    return { totalPnl, totalPayoutsAmt, currentPool, riskPerTrade, poolPct, wins, losses, winRate, isBlownOut, remaining, currentBalance, netProfit };
-  }, [trades, payouts, startingDrawdown, startingBalance]);
+  const stats = useMemo(()=>{
+    const totalPnl       = trades.reduce((s,t)=>s+t.pnl,0);
+    const totalPayoutsAmt= payouts.reduce((s,p)=>s+p.amount,0);
+    const currentPool    = Math.max(0,startingDrawdown+totalPnl-totalPayoutsAmt);
+    const riskPerTrade   = currentPool/DIVISOR;
+    const poolPct        = Math.min(100,Math.max(0,((startingDrawdown+totalPnl)/startingDrawdown)*100));
+    const wins           = trades.filter(t=>t.pnl>0).length;
+    const losses         = trades.filter(t=>t.pnl<0).length;
+    const winRate        = trades.length?Math.round((wins/trades.length)*100):0;
+    const isBlownOut     = totalPnl<=-startingDrawdown;
+    const remaining      = startingDrawdown+totalPnl;
+    const netProfit      = totalPnl-totalPayoutsAmt;
+    return{totalPnl,totalPayoutsAmt,currentPool,riskPerTrade,poolPct,wins,losses,winRate,isBlownOut,remaining,netProfit};
+  },[trades,payouts,startingDrawdown,startingBalance]);
 
-  const addPayout = () => {
-    const amt = parseFloat(payoutForm.amount);
-    if (!payoutForm.amount || isNaN(amt) || amt <= 0) return;
-    setPayouts(prev => [{
-      id: Date.now(),
-      label: payoutForm.label || `Payout ${prev.length + 1}`,
-      amount: amt,
-      date: new Date().toLocaleDateString([], { month: 'short', day: 'numeric' }),
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-    }, ...prev]);
-    setPayoutForm({ label: '', amount: '' });
-  };
+  const barColor = stats.poolPct>=60?'var(--green)':stats.poolPct>=30?'var(--gold)':'var(--red)';
+  const maxContracts = Math.floor(stats.riskPerTrade/(inst.defaultTicks*inst.tickValue));
+  const tableMax = Math.max(maxContracts+3,10);
 
-  const removePayout = id => setPayouts(prev => prev.filter(p => p.id !== id));
-
-  const barColor = stats.poolPct >= 60 ? '#00b85c' : stats.poolPct >= 30 ? '#f0a500' : '#e03a52';
-  const maxContractsAtDefault = Math.floor(stats.riskPerTrade / (inst.defaultTicks * inst.tickValue));
-  const tableMax = Math.max(maxContractsAtDefault + 3, 10);
-
-  const addTrade = () => {
-    const pnlVal = parseFloat(form.pnl);
-    if (!form.pnl || isNaN(pnlVal)) return;
-    const finalPnl = form.outcome === 'win' ? Math.abs(pnlVal) : -Math.abs(pnlVal);
-    const newId = Date.now();
-    setTrades(prev => [{
-      id: newId,
-      label: form.label || `Trade ${prev.length + 1}`,
-      pnl: finalPnl,
-      instrument,
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-    }, ...prev]);
+  const addTrade = ()=>{
+    const v=parseFloat(form.pnl);
+    if(!form.pnl||isNaN(v)) return;
+    const finalPnl=form.outcome==='win'?Math.abs(v):-Math.abs(v);
+    const newId=Date.now();
+    setTrades(prev=>[{id:newId,label:form.label||`Trade ${prev.length+1}`,pnl:finalPnl,instrument,time:new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})},...prev]);
     setLastAdded(newId);
-    setTimeout(() => setLastAdded(null), 1000);
-    setForm({ label: '', pnl: '', outcome: 'win' });
+    setTimeout(()=>setLastAdded(null),1000);
+    setForm({label:'',pnl:'',outcome:'win'});
   };
+  const removeTrade = id=>setTrades(p=>p.filter(t=>t.id!==id));
 
-  const removeTrade = id => setTrades(prev => prev.filter(t => t.id !== id));
+  const addPayout = ()=>{
+    const amt=parseFloat(payoutForm.amount);
+    if(!payoutForm.amount||isNaN(amt)||amt<=0) return;
+    setPayouts(prev=>[{id:Date.now(),label:payoutForm.label||`Payout ${prev.length+1}`,amount:amt,date:new Date().toLocaleDateString([],{month:'short',day:'numeric'}),time:new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})},...prev]);
+    setPayoutForm({label:'',amount:''});
+  };
+  const removePayout = id=>setPayouts(p=>p.filter(x=>x.id!==id));
 
-  const tableRows = [];
-  for (let c = tableMax; c >= 1; c--) {
-    const maxTicks = Math.floor(stats.riskPerTrade / (c * inst.tickValue));
-    const isAffordable = (c * inst.defaultTicks * inst.tickValue) <= stats.riskPerTrade;
-    tableRows.push({ contracts: c, maxTicks, isAffordable });
+  const tableRows=[];
+  for(let c=tableMax;c>=1;c--){
+    const maxTicks=Math.floor(stats.riskPerTrade/(c*inst.tickValue));
+    const isAffordable=(c*inst.defaultTicks*inst.tickValue)<=stats.riskPerTrade;
+    tableRows.push({contracts:c,maxTicks,isAffordable});
   }
 
-  return (
+  const inputStyle={fontSize:'14px',padding:'11px 14px'};
+
+  return(
     <div className="tracker-wrap">
 
-      {/* Account Settings — always visible at top */}
-      <div style={{background:'#fff', border:'1px solid #dde1e7', borderRadius:'8px', padding:'16px 20px', marginBottom:'12px', boxShadow:'0 1px 4px #00000008'}}>
-        <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'12px'}}>
-          <div style={{fontSize:'8px', letterSpacing:'3px', color:'#9aa5b4', textTransform:'uppercase'}}>Account Settings</div>
-          {(balance || drawdown) && (
-            <button onClick={() => { setTrades([]); setPayouts([]); setBalance(''); setDrawdown(''); }}
-              style={{fontSize:'7px', letterSpacing:'2px', color:'#9aa5b4', background:'none', border:'1px solid #dde1e7', borderRadius:'4px', padding:'3px 8px', cursor:'pointer', fontFamily:"'DM Mono', monospace", textTransform:'uppercase'}}>
+      {/* ── ACCOUNT SETTINGS ── */}
+      <div className="dark-card" style={{padding:'16px 20px',marginBottom:'12px'}}>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'12px'}}>
+          <div style={{fontSize:'8px',letterSpacing:'3px',color:'var(--text2)',textTransform:'uppercase'}}>⚙️ Account Settings</div>
+          {(balance||drawdown)&&(
+            <button onClick={()=>{setTrades([]);setPayouts([]);setBalance('');setDrawdown('');}}
+              style={{fontSize:'7px',letterSpacing:'2px',color:'var(--text2)',background:'none',border:'1px solid var(--border)',borderRadius:'4px',padding:'4px 10px',cursor:'pointer',fontFamily:"'DM Mono',monospace",textTransform:'uppercase'}}>
               Reset
             </button>
           )}
         </div>
-        <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'10px', alignItems:'end'}}>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'10px'}}>
           <div className="input-group">
             <label className="input-label">Account Balance ($)</label>
-            <input className="tinput" type="number" placeholder="e.g. 50000"
-              value={balance} onChange={e => setBalance(e.target.value)} />
+            <input className="tinput" type="number" placeholder="e.g. 150000" value={balance} onChange={e=>setBalance(e.target.value)}/>
           </div>
           <div className="input-group">
             <label className="input-label">Max Drawdown ($)</label>
-            <input className="tinput" type="number" placeholder="e.g. 2500"
-              value={drawdown} onChange={e => setDrawdown(e.target.value)} />
+            <input className="tinput" type="number" placeholder="e.g. 4500" value={drawdown} onChange={e=>setDrawdown(e.target.value)}/>
           </div>
         </div>
-        {drawdown && (
-          <div style={{marginTop:'10px', display:'flex', alignItems:'center', gap:'8px', background:'#f0faf5', border:'1px solid #b8e8cf', borderRadius:'6px', padding:'8px 14px'}}>
-            <div style={{fontSize:'8px', letterSpacing:'2px', color:'#6b7a8d', textTransform:'uppercase'}}>Risk / Trade:</div>
-            <div style={{fontFamily:"'Bebas Neue', sans-serif", fontSize:'22px', color:'#00b85c', letterSpacing:'2px', lineHeight:1}}>${(startingDrawdown / DIVISOR).toFixed(0)}</div>
-            <div style={{fontSize:'9px', color:'#9aa5b4', letterSpacing:'1px'}}>${startingDrawdown.toLocaleString()} ÷ {DIVISOR}</div>
+        {drawdown&&(
+          <div style={{marginTop:'10px',display:'flex',alignItems:'center',gap:'10px',background:'#041408',border:'1px solid #00c96a33',borderRadius:'7px',padding:'10px 16px'}}>
+            <div style={{fontSize:'22px'}}>🖨️</div>
+            <div>
+              <div style={{fontSize:'8px',letterSpacing:'2px',color:'var(--text2)',textTransform:'uppercase'}}>Risk / Trade</div>
+              <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:'24px',color:'var(--green)',letterSpacing:'2px',lineHeight:1,textShadow:'0 0 16px #00c96a55'}}>
+                ${(startingDrawdown/DIVISOR).toFixed(0)}
+              </div>
+            </div>
+            <div style={{marginLeft:'auto',fontSize:'9px',color:'var(--text2)',letterSpacing:'1px'}}>${startingDrawdown.toLocaleString()} ÷ {DIVISOR}</div>
           </div>
         )}
       </div>
 
-      {stats.isBlownOut && (
+      {stats.isBlownOut&&(
         <div className="danger-banner">⚠ DRAWDOWN LIMIT REACHED — STOP TRADING</div>
       )}
 
-      {/* Instrument Toggle */}
-      <div style={{display:'flex', background:'#f0f2f5', border:'1px solid #dde1e7', borderRadius:'8px', padding:'4px', marginBottom:'12px', gap:'4px'}}>
-        {Object.values(INSTRUMENTS).map(i => (
-          <button key={i.name} onClick={() => setInstrument(i.name)} style={{
-            flex:1, padding:'10px', border:'none', borderRadius:'6px',
-            background: instrument === i.name ? '#fff' : 'transparent',
-            boxShadow: instrument === i.name ? '0 1px 4px #00000014' : 'none',
-            fontFamily:"'Bebas Neue', sans-serif", fontSize:'16px', letterSpacing:'3px',
-            color: instrument === i.name ? '#00b85c' : '#9aa5b4',
-            cursor:'pointer', transition:'all 0.2s',
+      {/* ── INSTRUMENT TOGGLE ── */}
+      <div style={{display:'flex',background:'#060c1a',border:'1px solid var(--border)',borderRadius:'9px',padding:'4px',marginBottom:'12px',gap:'4px'}}>
+        {Object.values(INSTRUMENTS).map(i=>(
+          <button key={i.name} onClick={()=>setInstrument(i.name)} style={{
+            flex:1,padding:'11px',border:'none',borderRadius:'7px',
+            background:instrument===i.name?'var(--card)':'transparent',
+            boxShadow:instrument===i.name?'0 2px 8px #00000055':'none',
+            fontFamily:"'Bebas Neue',sans-serif",fontSize:'17px',letterSpacing:'3px',
+            color:instrument===i.name?'var(--green)':'var(--text2)',
+            cursor:'pointer',transition:'all .2s',
           }}>
             {i.name}
-            <div style={{fontSize:'7px', letterSpacing:'1px', color: instrument === i.name ? '#6b7a8d' : '#c5cdd8', fontFamily:"'DM Mono', monospace", marginTop:'2px'}}>
-              {i.label}
-            </div>
+            <div style={{fontSize:'7px',letterSpacing:'1px',color:instrument===i.name?'var(--text2)':'var(--text3)',fontFamily:"'DM Mono',monospace",marginTop:'2px'}}>{i.label}</div>
           </button>
         ))}
       </div>
 
-      {/* Health Bar */}
       <div className="content-grid" style={{marginBottom:'0'}}>
-        <div className="health-card full-col">
-        <div className="health-header">
-          <div className="health-label">Account Health</div>
-          <div className="health-pct" style={{color: barColor}}>
-            {stats.isBlownOut ? 'BLOWN' : `${Math.round(stats.poolPct)}%`}
+
+        {/* ── HEALTH BAR ── */}
+        <div className="dark-card health-card full-col">
+          <div className="health-header">
+            <div className="health-label">Account Health</div>
+            <div className="health-pct" style={{color:barColor,textShadow:`0 0 20px ${barColor}66`}}>
+              {stats.isBlownOut?'BLOWN':`${Math.round(stats.poolPct)}%`}
+            </div>
+          </div>
+          <div className="bar-track">
+            <div className="bar-fill" style={{width:`${Math.max(0,stats.poolPct)}%`,background:barColor,boxShadow:`0 0 12px ${barColor}88`}}/>
+          </div>
+          <div className="health-sub">
+            <span>Remaining: ${stats.remaining.toFixed(2)}</span>
+            <span>DD Limit: ${startingDrawdown.toLocaleString()}</span>
           </div>
         </div>
-        <div className="bar-track">
-          <div className="bar-fill" style={{width:`${Math.max(0,stats.poolPct)}%`, background:barColor, boxShadow:`0 0 10px ${barColor}66`}} />
-        </div>
-        <div className="health-sub">
-          <span>Remaining: ${stats.remaining.toFixed(2)}</span>
-          <span>DD Limit: ${startingDrawdown.toLocaleString()}</span>
-        </div>
-        </div>
 
-        {/* Metrics */}
-        <div className="metric">
-          <div style={{fontSize:'20px', marginBottom:'4px'}}>📊</div>
-          <div className={`metric-val ${stats.totalPnl >= 0 ? 'green' : 'red'}`}>
-            {stats.totalPnl >= 0 ? '+' : ''}{stats.totalPnl.toFixed(0)}
+        {/* ── METRICS ── */}
+        <div className="dark-card metric">
+          <div style={{fontSize:'22px',marginBottom:'5px'}}>📊</div>
+          <div className={`metric-val ${stats.totalPnl>=0?'green':'red'}`} style={{textShadow:stats.totalPnl>=0?'0 0 14px #00c96a55':'0 0 14px #f0406055'}}>
+            {stats.totalPnl>=0?'+':''}{stats.totalPnl.toFixed(0)}
           </div>
           <div className="metric-label">Total P&L</div>
         </div>
-        <div className="metric">
-          <div style={{fontSize:'20px', marginBottom:'4px'}}>🎯</div>
-          <div className="metric-val white">{stats.winRate}%</div>
+        <div className="dark-card metric">
+          <div style={{fontSize:'22px',marginBottom:'5px'}}>🎯</div>
+          <div className="metric-val" style={{color:'var(--text)'}}>{stats.winRate}%</div>
           <div className="metric-label">Win Rate</div>
         </div>
-        <div className="metric">
-          <div style={{fontSize:'20px', marginBottom:'4px'}}>⚡</div>
-          <div className="metric-val white">{trades.length}</div>
+        <div className="dark-card metric">
+          <div style={{fontSize:'22px',marginBottom:'5px'}}>⚡</div>
+          <div className="metric-val" style={{color:'var(--text)'}}>{trades.length}</div>
           <div className="metric-label">Trades</div>
         </div>
 
-        {/* Risk Box */}
-        <div className="risk-box" style={{marginBottom:0}}>
-          <div>
-            <div className="risk-label">Max Risk / Trade</div>
-            <div style={{display:'flex', alignItems:'center', gap:'8px'}}>
-              <span style={{fontSize:'28px'}}>💰</span>
-              <div className="risk-amount">${stats.riskPerTrade.toFixed(0)}</div>
-            </div>
-            <div className="risk-formula">${stats.currentPool.toFixed(0)} pool ÷ {DIVISOR}</div>
+        {/* ── RISK BOX ── */}
+        <div className="dark-card risk-box">
+          <div className="risk-label">Max Risk / Trade</div>
+          <div style={{display:'flex',alignItems:'center',gap:'10px',margin:'4px 0'}}>
+            <span style={{fontSize:'36px'}}>💰</span>
+            <div className="risk-amount">${stats.riskPerTrade.toFixed(0)}</div>
+            <span style={{fontSize:'36px'}}>💰</span>
           </div>
-          <div style={{textAlign:'right'}}>
-            <div className="risk-pool-label">Current Pool</div>
-            <div className="risk-pool-val">${stats.currentPool.toFixed(2)}</div>
-            <div style={{fontSize:'9px',color:'#9aa5b4',marginTop:4}}>{stats.wins}W · {stats.losses}L</div>
-            {stats.wins > 0 && stats.losses === 0 && <div style={{fontSize:'9px',color:'#f0a500',marginTop:4,letterSpacing:'1px'}}>🔥 PERFECT SESSION</div>}
-            {stats.wins >= 3 && stats.wins > stats.losses * 2 && <div style={{fontSize:'9px',color:'#00b85c',marginTop:4,letterSpacing:'1px'}}>📈 ON FIRE</div>}
-          </div>
+          <div className="risk-formula">${stats.currentPool.toFixed(0)} pool ÷ {DIVISOR}</div>
+          <div className="risk-pool-label">Current Pool</div>
+          <div className="risk-pool-val">${stats.currentPool.toFixed(2)}</div>
+          <div style={{fontSize:'10px',color:'var(--text2)',marginTop:6}}>{stats.wins}W · {stats.losses}L</div>
+          {stats.wins>0&&stats.losses===0&&<div style={{fontSize:'11px',color:'var(--gold)',marginTop:6,letterSpacing:'1px'}}>🔥 PERFECT SESSION</div>}
+          {stats.wins>=3&&stats.wins>stats.losses*2&&<div style={{fontSize:'11px',color:'var(--green)',marginTop:6,letterSpacing:'1px'}}>📈 ON FIRE</div>}
         </div>
 
-        {/* ── BOTTOM ROW: Contracts LEFT | Log+Journal+Payouts RIGHT ── */}
-        <div className="full-col" style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'12px', alignItems:'start'}}>
+        {/* ── WEEKLY CHART ── */}
+        <div className="full-col">
+          <WeeklyChart trades={trades}/>
+        </div>
 
-          {/* LEFT — Contracts Table */}
-          <div style={{background:'#fff', border:'1px solid #dde1e7', borderRadius:'8px', padding:'16px 20px', boxShadow:'0 1px 4px #00000008'}}>
-            <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'12px'}}>
-              <div style={{fontSize:'8px', letterSpacing:'3px', color:'#6b7a8d', textTransform:'uppercase'}}>{inst.name} Contracts</div>
-              <div style={{fontSize:'8px', letterSpacing:'2px', color:'#6b7a8d', textTransform:'uppercase'}}>1 Tick = ${inst.tickValue.toFixed(2)}</div>
+        {/* ── BOTTOM ROW ── */}
+        <div className="full-col" style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'12px',alignItems:'start'}}>
+
+          {/* LEFT — CONTRACTS TABLE */}
+          <div className="dark-card" style={{padding:'16px 20px'}}>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'12px'}}>
+              <div style={{fontSize:'8px',letterSpacing:'3px',color:'var(--text2)',textTransform:'uppercase'}}>{inst.name} Contracts</div>
+              <div style={{fontSize:'8px',letterSpacing:'2px',color:'var(--text2)',textTransform:'uppercase'}}>1 Tick = ${inst.tickValue.toFixed(2)}</div>
             </div>
-            <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'4px', marginBottom:'6px'}}>
-              {['Contracts','Max Stop Ticks'].map(h => (
-                <div key={h} style={{fontSize:'7px', letterSpacing:'2px', color:'#9aa5b4', textTransform:'uppercase', textAlign:'center', padding:'4px 0'}}>{h}</div>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'4px',marginBottom:'6px'}}>
+              {['Contracts','Max Stop Ticks'].map(h=>(
+                <div key={h} style={{fontSize:'7px',letterSpacing:'2px',color:'var(--text3)',textTransform:'uppercase',textAlign:'center',padding:'4px 0'}}>{h}</div>
               ))}
             </div>
-            {tableRows.map(({contracts, maxTicks, isAffordable}) => (
+            {tableRows.map(({contracts,maxTicks,isAffordable})=>(
               <div key={contracts} style={{
-                display:'grid', gridTemplateColumns:'1fr 1fr', gap:'4px', marginBottom:'3px',
-                background: isAffordable ? '#f0faf5' : '#fafbfc',
-                border: isAffordable ? '1px solid #b8e8cf' : '1px solid #eef0f3',
-                borderRadius:'6px', padding:'8px', opacity: isAffordable ? 1 : 0.4,
-                transition:'all 0.3s',
+                display:'grid',gridTemplateColumns:'1fr 1fr',gap:'4px',marginBottom:'3px',
+                background:isAffordable?'#041a10':'#060c18',
+                border:isAffordable?'1px solid #00c96a33':'1px solid var(--border)',
+                borderRadius:'7px',padding:'9px',opacity:isAffordable?1:.35,transition:'all .3s',
               }}>
-                <div style={{fontFamily:"'Bebas Neue', sans-serif", fontSize: isAffordable ? '20px' : '16px', color: isAffordable ? '#00b85c' : '#c5cdd8', textAlign:'center', lineHeight:1}}>{contracts}</div>
-                <div style={{fontFamily:"'Bebas Neue', sans-serif", fontSize: isAffordable ? '20px' : '16px', color: isAffordable ? '#d4930a' : '#c5cdd8', textAlign:'center', lineHeight:1}}>{maxTicks}</div>
+                <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:isAffordable?'22px':'16px',color:isAffordable?'var(--green)':'var(--text3)',textAlign:'center',lineHeight:1,textShadow:isAffordable?'0 0 10px #00c96a55':''}}>{contracts}</div>
+                <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:isAffordable?'22px':'16px',color:isAffordable?'var(--gold)':'var(--text3)',textAlign:'center',lineHeight:1,textShadow:isAffordable?'0 0 10px #f0b00055':''}}>{maxTicks}</div>
               </div>
             ))}
-            <div style={{marginTop:'10px', fontSize:'8px', color:'#9aa5b4', letterSpacing:'1px', textAlign:'center'}}>
+            <div style={{marginTop:'10px',fontSize:'8px',color:'var(--text3)',letterSpacing:'1px',textAlign:'center'}}>
               count your stop ticks → match to contracts row
             </div>
           </div>
 
-          {/* RIGHT — Log Trade + Trade Journal + Payouts stacked */}
-          <div style={{display:'flex', flexDirection:'column', gap:'12px'}}>
+          {/* RIGHT — LOG TRADE + JOURNAL + PAYOUTS */}
+          <div style={{display:'flex',flexDirection:'column',gap:'12px'}}>
 
-            {/* Log Trade */}
-            <div style={{background:'#fff', border:'1px solid #dde1e7', borderRadius:'8px', padding:'16px 20px', boxShadow:'0 1px 4px #00000008'}}>
-              <div style={{fontSize:'8px', letterSpacing:'3px', color:'#9aa5b4', textTransform:'uppercase', marginBottom:'14px'}}>Log Trade</div>
-              <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'10px', marginBottom:'10px'}}>
+            {/* LOG TRADE */}
+            <div className="dark-card" style={{padding:'16px 20px'}}>
+              <div className="section-lbl">Log Trade</div>
+              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'10px',marginBottom:'10px'}}>
                 <div className="input-group">
                   <label className="input-label">Label</label>
-                  <input className="tinput" style={{fontSize:'14px', padding:'11px 14px'}} placeholder="e.g. Long MNQ" value={form.label} onChange={e => setForm(f => ({...f, label:e.target.value}))} />
+                  <input className="tinput" style={inputStyle} placeholder="e.g. Long MNQ" value={form.label} onChange={e=>setForm(f=>({...f,label:e.target.value}))}/>
                 </div>
                 <div className="input-group">
                   <label className="input-label">Outcome</label>
-                  <select className="tselect" style={{fontSize:'14px', padding:'11px 14px'}} value={form.outcome} onChange={e => setForm(f => ({...f, outcome:e.target.value}))}>
+                  <select className="tselect" style={inputStyle} value={form.outcome} onChange={e=>setForm(f=>({...f,outcome:e.target.value}))}>
                     <option value="win">WIN</option>
                     <option value="loss">LOSS</option>
                   </select>
                 </div>
                 <div className="input-group" style={{gridColumn:'1/-1'}}>
                   <label className="input-label">Dollar Amount ($)</label>
-                  <input className="tinput" style={{fontSize:'14px', padding:'11px 14px'}} type="number" placeholder="e.g. 350" value={form.pnl}
-                    onChange={e => setForm(f => ({...f, pnl:e.target.value}))}
-                    onKeyDown={e => e.key === 'Enter' && addTrade()} />
+                  <input className="tinput" style={inputStyle} type="number" placeholder="e.g. 350" value={form.pnl}
+                    onChange={e=>setForm(f=>({...f,pnl:e.target.value}))}
+                    onKeyDown={e=>e.key==='Enter'&&addTrade()}/>
                 </div>
               </div>
-              <button className="add-btn shimmer-btn" style={{padding:'14px', fontSize:'17px'}} onClick={addTrade}>+ LOG TRADE</button>
+              <button className="add-btn shimmer-btn" onClick={addTrade}>+ LOG TRADE</button>
             </div>
 
-            {/* Trade Journal */}
-            <div style={{background:'#fff', border:'1px solid #dde1e7', borderRadius:'8px', overflow:'hidden', boxShadow:'0 1px 4px #00000008'}}>
-              <div style={{padding:'16px 20px', borderBottom:'1px solid #eef0f3', display:'flex', justifyContent:'space-between', alignItems:'center'}}>
-                <div style={{fontSize:'8px', letterSpacing:'3px', color:'#9aa5b4', textTransform:'uppercase'}}>Trade Journal</div>
-                {trades.length > 0 && <button className="clear-btn" onClick={() => setTrades([])}>CLEAR ALL</button>}
+            {/* TRADE JOURNAL */}
+            <div className="dark-card log-section">
+              <div className="log-header">
+                <div className="section-lbl" style={{margin:0}}>Trade Journal</div>
+                {trades.length>0&&<button className="clear-btn" onClick={()=>setTrades([])}>CLEAR ALL</button>}
               </div>
-              {trades.length === 0 ? (
-                <div style={{padding:'36px 20px', textAlign:'center', fontSize:'11px', color:'#c5cdd8', letterSpacing:'2px', textTransform:'uppercase'}}>No trades yet</div>
-              ) : trades.map((t, i) => (
-                <div key={t.id} className={lastAdded === t.id ? (t.pnl >= 0 ? 'win-row-anim' : 'loss-row-anim') : ''} style={{display:'grid', gridTemplateColumns:'32px 1fr auto auto', gap:'12px', alignItems:'center', padding:'14px 20px', borderBottom: i < trades.length - 1 ? '1px solid #eef0f3' : 'none', borderRadius: lastAdded === t.id ? '6px' : '0', transition:'background 0.3s'}}>
-                  <div style={{fontSize:'10px', color:'#9aa5b4', textAlign:'center'}}>{trades.length - i}</div>
+              {trades.length===0?(
+                <div className="empty-log">No trades yet — let it print 🖨️</div>
+              ):trades.map((t,i)=>(
+                <div key={t.id}
+                  className={lastAdded===t.id?(t.pnl>=0?'win-row-anim':'loss-row-anim'):''}
+                  style={{display:'grid',gridTemplateColumns:'32px 1fr auto auto',gap:'12px',alignItems:'center',padding:'14px 20px',borderBottom:i<trades.length-1?'1px solid var(--border)':'none',transition:'background .3s'}}>
+                  <div style={{fontSize:'10px',color:'var(--text2)',textAlign:'center'}}>{trades.length-i}</div>
                   <div>
-                    <div style={{fontSize:'14px', color:'#1a2332', marginBottom:'3px'}}>{t.label}</div>
-                    <div style={{fontSize:'10px', color:'#9aa5b4', letterSpacing:'1px'}}>{t.time}{t.instrument ? ` · ${t.instrument}` : ''}</div>
+                    <div style={{fontSize:'14px',color:'var(--text)',marginBottom:'3px'}}>{t.label}</div>
+                    <div style={{fontSize:'10px',color:'var(--text2)',letterSpacing:'1px'}}>{t.time}{t.instrument?` · ${t.instrument}`:''}</div>
                   </div>
-                  <div style={{fontFamily:"'Bebas Neue', sans-serif", fontSize:'20px', letterSpacing:'1px', textAlign:'right'}} className={t.pnl >= 0 ? 'green' : 'red'}>
-                    {t.pnl >= 0 ? '+' : ''}${Math.abs(t.pnl).toFixed(0)}
+                  <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:'20px',letterSpacing:'1px',textAlign:'right',color:t.pnl>=0?'var(--green)':'var(--red)',textShadow:t.pnl>=0?'0 0 10px #00c96a55':'0 0 10px #f0406055'}}>
+                    {t.pnl>=0?'+':''}${Math.abs(t.pnl).toFixed(0)}
                   </div>
-                  <button className="trade-del" style={{fontSize:'16px'}} onClick={() => removeTrade(t.id)}>✕</button>
+                  <button className="trade-del" onClick={()=>removeTrade(t.id)}>✕</button>
                 </div>
               ))}
             </div>
 
-            {/* Payouts */}
-            <div style={{background:'#fff', border:'1px solid #dde1e7', borderRadius:'8px', overflow:'hidden', boxShadow:'0 1px 4px #00000008'}}>
-              <div style={{padding:'16px 20px', borderBottom:'1px solid #eef0f3', display:'flex', justifyContent:'space-between', alignItems:'center', cursor:'pointer'}} onClick={() => setShowPayouts(v => !v)}>
-                <div style={{display:'flex', alignItems:'center', gap:'12px'}}>
-                  <div style={{fontSize:'8px', letterSpacing:'3px', color:'#9aa5b4', textTransform:'uppercase'}}>Payouts</div>
-                  {payouts.length > 0 && (
-                    <div style={{fontFamily:"'Bebas Neue', sans-serif", fontSize:'18px', color:'#f0a500', letterSpacing:'1px'}}>
-                      ${stats.totalPayoutsAmt.toFixed(0)} total
+            {/* PAYOUTS */}
+            <div className="dark-card log-section">
+              <div className="log-header" style={{cursor:'pointer'}} onClick={()=>setShowPayouts(v=>!v)}>
+                <div style={{display:'flex',alignItems:'center',gap:'12px'}}>
+                  <div className="section-lbl" style={{margin:0}}>Payouts</div>
+                  {payouts.length>0&&(
+                    <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:'18px',color:'var(--gold)',letterSpacing:'1px',textShadow:'0 0 10px #f0b00055'}}>
+                      ${payouts.reduce((s,p)=>s+p.amount,0).toFixed(0)} total
                     </div>
                   )}
                 </div>
-                <div style={{display:'flex', alignItems:'center', gap:'12px'}}>
-                  {payouts.length > 0 && (
-                    <div style={{fontSize:'9px', letterSpacing:'2px', color:'#9aa5b4', textTransform:'uppercase'}}>
-                      {payouts.length} payout{payouts.length !== 1 ? 's' : ''}
-                    </div>
-                  )}
-                  <div style={{color:'#9aa5b4', fontSize:'16px', transition:'transform 0.2s', transform: showPayouts ? 'rotate(180deg)' : 'rotate(0deg)'}}>▾</div>
+                <div style={{display:'flex',alignItems:'center',gap:'10px'}}>
+                  {payouts.length>0&&<div style={{fontSize:'9px',letterSpacing:'2px',color:'var(--text2)',textTransform:'uppercase'}}>{payouts.length} payout{payouts.length!==1?'s':''}</div>}
+                  <div style={{color:'var(--text2)',fontSize:'16px',transition:'transform .2s',transform:showPayouts?'rotate(180deg)':'rotate(0deg)'}}>▾</div>
                 </div>
               </div>
 
-              {showPayouts && (
+              {showPayouts&&(
                 <div style={{padding:'16px 20px'}}>
-                  {payouts.length > 0 && (
-                    <div style={{display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:'8px', marginBottom:'16px'}}>
-                      <div style={{background:'#f0faf5', border:'1px solid #b8e8cf', borderRadius:'6px', padding:'12px', textAlign:'center'}}>
-                        <div style={{fontFamily:"'Bebas Neue', sans-serif", fontSize:'22px', color:'#00b85c', letterSpacing:'1px', lineHeight:1}}>${stats.totalPnl.toFixed(0)}</div>
-                        <div style={{fontSize:'7px', letterSpacing:'2px', color:'#6b7a8d', textTransform:'uppercase', marginTop:'5px'}}>Gross P&L</div>
-                      </div>
-                      <div style={{background:'#fff8ec', border:'1px solid #f0a50033', borderRadius:'6px', padding:'12px', textAlign:'center'}}>
-                        <div style={{fontFamily:"'Bebas Neue', sans-serif", fontSize:'22px', color:'#f0a500', letterSpacing:'1px', lineHeight:1}}>-${stats.totalPayoutsAmt.toFixed(0)}</div>
-                        <div style={{fontSize:'7px', letterSpacing:'2px', color:'#6b7a8d', textTransform:'uppercase', marginTop:'5px'}}>Paid Out</div>
-                      </div>
-                      <div style={{background:'#f5f7fa', border:'1px solid #dde1e7', borderRadius:'6px', padding:'12px', textAlign:'center'}}>
-                        <div style={{fontFamily:"'Bebas Neue', sans-serif", fontSize:'22px', color: stats.netProfit >= 0 ? '#1a2332' : '#e03a52', letterSpacing:'1px', lineHeight:1}}>${stats.netProfit.toFixed(0)}</div>
-                        <div style={{fontSize:'7px', letterSpacing:'2px', color:'#6b7a8d', textTransform:'uppercase', marginTop:'5px'}}>Net Profit</div>
-                      </div>
+                  {payouts.length>0&&(
+                    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:'8px',marginBottom:'16px'}}>
+                      {[
+                        {val:stats.totalPnl,label:'Gross P&L',color:'var(--green)',bg:'#041a10',border:'#00c96a33'},
+                        {val:-stats.totalPayoutsAmt,label:'Paid Out',color:'var(--gold)',bg:'#1a1000',border:'#f0b00033'},
+                        {val:stats.netProfit,label:'Net Profit',color:stats.netProfit>=0?'var(--text)':'var(--red)',bg:'#0a1020',border:'var(--border)'},
+                      ].map(({val,label,color,bg,border})=>(
+                        <div key={label} style={{background:bg,border:`1px solid ${border}`,borderRadius:'7px',padding:'12px',textAlign:'center'}}>
+                          <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:'22px',color,letterSpacing:'1px',lineHeight:1}}>{val>=0&&label!=='Paid Out'?'+':''}${Math.abs(val).toFixed(0)}</div>
+                          <div style={{fontSize:'7px',letterSpacing:'2px',color:'var(--text2)',textTransform:'uppercase',marginTop:'5px'}}>{label}</div>
+                        </div>
+                      ))}
                     </div>
                   )}
                   <div style={{marginBottom:'14px'}}>
-                    <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'10px', marginBottom:'10px'}}>
+                    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'10px',marginBottom:'10px'}}>
                       <div className="input-group">
                         <label className="input-label">Label</label>
-                        <input className="tinput" style={{fontSize:'14px', padding:'11px 14px'}} placeholder="e.g. Weekly payout" value={payoutForm.label} onChange={e => setPayoutForm(f => ({...f, label:e.target.value}))} />
+                        <input className="tinput" style={inputStyle} placeholder="e.g. Weekly payout" value={payoutForm.label} onChange={e=>setPayoutForm(f=>({...f,label:e.target.value}))}/>
                       </div>
                       <div className="input-group">
                         <label className="input-label">Amount ($)</label>
-                        <input className="tinput" style={{fontSize:'14px', padding:'11px 14px'}} type="number" placeholder="e.g. 500" value={payoutForm.amount}
-                          onChange={e => setPayoutForm(f => ({...f, amount:e.target.value}))}
-                          onKeyDown={e => e.key === 'Enter' && addPayout()} />
+                        <input className="tinput" style={inputStyle} type="number" placeholder="e.g. 500" value={payoutForm.amount}
+                          onChange={e=>setPayoutForm(f=>({...f,amount:e.target.value}))}
+                          onKeyDown={e=>e.key==='Enter'&&addPayout()}/>
                       </div>
                     </div>
-                    <button className="add-btn payout-shimmer" style={{padding:'14px', fontSize:'17px', background:'none'}} onClick={addPayout}>+ LOG PAYOUT</button>
+                    <button className="add-btn payout-shimmer" onClick={addPayout}>+ LOG PAYOUT</button>
                   </div>
-                  {payouts.length === 0 ? (
-                    <div style={{padding:'20px 0 4px', textAlign:'center', fontSize:'11px', color:'#c5cdd8', letterSpacing:'2px', textTransform:'uppercase'}}>No payouts logged yet</div>
-                  ) : (
-                    <div style={{borderTop:'1px solid #eef0f3', marginTop:'4px'}}>
-                      {payouts.length > 1 && (
-                        <div style={{display:'flex', justifyContent:'flex-end', padding:'8px 0'}}>
-                          <button className="clear-btn" onClick={() => setPayouts([])}>CLEAR ALL</button>
-                        </div>
-                      )}
-                      {payouts.map((p, i) => (
-                        <div key={p.id} style={{display:'grid', gridTemplateColumns:'32px 1fr auto auto', gap:'12px', alignItems:'center', padding:'13px 0', borderBottom: i < payouts.length - 1 ? '1px solid #eef0f3' : 'none'}}>
-                          <div style={{fontSize:'10px', color:'#9aa5b4', textAlign:'center'}}>{payouts.length - i}</div>
+                  {payouts.length===0?(
+                    <div className="empty-log" style={{padding:'16px 0 4px'}}>No payouts logged yet</div>
+                  ):(
+                    <div style={{borderTop:'1px solid var(--border)',marginTop:'4px'}}>
+                      {payouts.length>1&&<div style={{display:'flex',justifyContent:'flex-end',padding:'8px 0'}}><button className="clear-btn" onClick={()=>setPayouts([])}>CLEAR ALL</button></div>}
+                      {payouts.map((p,i)=>(
+                        <div key={p.id} style={{display:'grid',gridTemplateColumns:'32px 1fr auto auto',gap:'12px',alignItems:'center',padding:'13px 0',borderBottom:i<payouts.length-1?'1px solid var(--border)':'none'}}>
+                          <div style={{fontSize:'10px',color:'var(--text2)',textAlign:'center'}}>{payouts.length-i}</div>
                           <div>
-                            <div style={{fontSize:'14px', color:'#1a2332', marginBottom:'3px'}}>{p.label}</div>
-                            <div style={{fontSize:'10px', color:'#9aa5b4', letterSpacing:'1px'}}>{p.date} · {p.time}</div>
+                            <div style={{fontSize:'14px',color:'var(--text)',marginBottom:'3px'}}>{p.label}</div>
+                            <div style={{fontSize:'10px',color:'var(--text2)',letterSpacing:'1px'}}>{p.date} · {p.time}</div>
                           </div>
-                          <div style={{fontFamily:"'Bebas Neue', sans-serif", fontSize:'20px', color:'#f0a500', letterSpacing:'1px', textAlign:'right'}}>
-                            +${p.amount.toFixed(0)}
-                          </div>
-                          <button className="trade-del" style={{fontSize:'16px'}} onClick={() => removePayout(p.id)}>✕</button>
+                          <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:'20px',color:'var(--gold)',letterSpacing:'1px',textAlign:'right',textShadow:'0 0 10px #f0b00055'}}>+${p.amount.toFixed(0)}</div>
+                          <button className="trade-del" onClick={()=>removePayout(p.id)}>✕</button>
                         </div>
                       ))}
                     </div>
@@ -722,27 +811,25 @@ function TrackerPage() {
               )}
             </div>
 
-          </div>{/* end RIGHT col */}
-        </div>{/* end BOTTOM ROW */}
+          </div>{/* end RIGHT */}
+        </div>{/* end Bottom Row */}
 
       </div>
     </div>
   );
 }
 
-// ─────────────────────────────────────────────
-// APP SHELL
-// ─────────────────────────────────────────────
-function App() {
-  return (
+/* ─── APP SHELL ─── */
+function App(){
+  return(
     <div>
-      <MoneyMachineHeader />
-      <TrackerPage />
+      <MoneyMachineHeader/>
+      <TrackerPage/>
     </div>
   );
 }
 
-ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
 </script>
 </body>
 </html>
