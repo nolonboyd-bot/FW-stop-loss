@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
@@ -229,4 +229,626 @@ html,body{background:var(--bg);font-family:'DM Mono',monospace;color:var(--text)
 <div class="side-left">TOLD YALL</div>
 <div class="side-right">PUT SOME RESPECT ON MY NAME</div>
 
-<!-- CORNER
+<!-- CORNER MONEY PRINTERS -->
+<div class="corner-printer corner-left">🖨️</div>
+<div class="corner-printer corner-right">💵</div>
+
+<div class="app-main">
+<div id="root"></div>
+</div>
+
+<script type="text/babel">
+const { useState, useMemo, useEffect } = React;
+
+const DIVISOR = 7;
+
+const INSTRUMENTS = {
+  MNQ: { name:'MNQ', label:'Micro Nasdaq',   tickValue:0.5,  tickSize:0.25, defaultTicks:40 },
+  MES: { name:'MES', label:'Micro S&P 500',  tickValue:1.25, tickSize:0.25, defaultTicks:20 },
+  MGC: { name:'MGC', label:'Micro Gold',     tickValue:1.0,  tickSize:0.10, defaultTicks:25 },
+  MYM: { name:'MYM', label:'Micro Dow',      tickValue:0.5,  tickSize:1.0,  defaultTicks:30 },
+};
+
+function GearSVG({size,color}){
+  const r=size/2,teeth=8,ir=r*.55,tr=r*.85,tw=.28;
+  let d='';
+  for(let i=0;i<teeth;i++){
+    const a0=(i*2*Math.PI/teeth)-Math.PI/teeth;
+    const a1=a0+tw,a2=a0+Math.PI/teeth-tw,a3=a0+Math.PI/teeth;
+    d+=`L${r+tr*Math.cos(a0)} ${r+tr*Math.sin(a0)} L${r+tr*Math.cos(a1)} ${r+tr*Math.sin(a1)} `;
+    d+=`L${r+r*Math.cos(a2)} ${r+r*Math.sin(a2)} L${r+r*Math.cos(a3)} ${r+r*Math.sin(a3)} `;
+  }
+  return(
+    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+      <path d={`M${r+tr} ${r} ${d}Z`} fill={color} opacity=".9"/>
+      <circle cx={r} cy={r} r={ir} fill="#04091a"/>
+      <circle cx={r} cy={r} r={ir*.38} fill={color} opacity=".5"/>
+    </svg>
+  );
+}
+
+function MoneyMachineHeader(){
+  return(
+    <div className="machine-header">
+      <div className="scan-line"/>
+      <div className="float-bills">
+        <span className="fbill">💵</span>
+        <span className="fbill">🪙</span>
+        <span className="fbill">💵</span>
+        <span className="fbill">💰</span>
+      </div>
+      <div className="hd-body">
+        <div className="hd-machine">
+          <div className="gear-wrap">
+            <div className="g-big"><GearSVG size={34} color="#00c96a"/></div>
+            <div className="g-sm"><GearSVG size={21} color="#f0b000"/></div>
+          </div>
+          <div className="printer-box">
+            <div className="printer-screen">$$$</div>
+            <div className="printer-lights">
+              <div className="plight g"/><div className="plight y"/><div className="plight r"/>
+            </div>
+            <div className="printer-slot"/>
+            <div className="bill-out">$$$</div>
+          </div>
+          <div className="gear-wrap">
+            <div className="g-big"><GearSVG size={28} color="#f0b000"/></div>
+            <div className="g-sm"><GearSVG size={18} color="#00c96a"/></div>
+          </div>
+        </div>
+
+        <div className="hd-title">
+          <div style={{display:'flex',justifyContent:'center',alignItems:'flex-end',gap:'6px',marginBottom:'8px'}}>
+            {/* Avatars (kept exactly as you had) */}
+            <svg width="38" height="48" viewBox="0 0 38 48" fill="none">
+              <ellipse cx="19" cy="14" rx="9" ry="10" fill="#3d1f0a"/>
+              <path d="M10 12 Q7 4 14 3 Q19 1 24 3 Q31 4 28 12 Q26 6 19 6 Q12 6 10 12Z" fill="#1a0a00"/>
+              <path d="M8 14 Q6 10 10 8 Q8 16 10 20Z" fill="#1a0a00"/>
+              <path d="M30 14 Q32 10 28 8 Q30 16 28 20Z" fill="#1a0a00"/>
+              <ellipse cx="19" cy="34" rx="11" ry="13" fill="#8B4513"/>
+              <rect x="12" y="28" width="14" height="18" rx="3" fill="#c0392b"/>
+              <ellipse cx="19" cy="14" rx="9" ry="10" fill="#3d1f0a"/>
+              <circle cx="16" cy="13" r="1.2" fill="#1a0a00"/>
+              <circle cx="22" cy="13" r="1.2" fill="#1a0a00"/>
+              <path d="M16 17 Q19 19 22 17" stroke="#1a0a00" strokeWidth="1" fill="none"/>
+              <ellipse cx="15.5" cy="13.5" r=".5" fill="#fff"/>
+              <ellipse cx="21.5" cy="13.5" r=".5" fill="#fff"/>
+            </svg>
+            <svg width="36" height="50" viewBox="0 0 36 50" fill="none">
+              <ellipse cx="18" cy="13" rx="9" ry="9.5" fill="#2c0f05"/>
+              <path d="M9 13 Q9 6 18 5 Q27 6 27 13 Q27 8 18 8 Q9 8 9 13Z" fill="#0a0500"/>
+              <ellipse cx="18" cy="32" rx="11" ry="14" fill="#6B3410"/>
+              <rect x="11" y="27" width="14" height="20" rx="3" fill="#1a3a5c"/>
+              <ellipse cx="18" cy="13" rx="9" ry="9.5" fill="#2c0f05"/>
+              <circle cx="15" cy="12" r="1.2" fill="#0a0500"/>
+              <circle cx="21" cy="12" r="1.2" fill="#0a0500"/>
+              <path d="M15 16.5 Q18 18.5 21 16.5" stroke="#0a0500" strokeWidth="1" fill="none"/>
+              <ellipse cx="14.5" cy="12.5" r=".5" fill="#fff"/>
+              <ellipse cx="20.5" cy="12.5" r=".5" fill="#fff"/>
+              <rect x="11" y="22" width="14" height="7" rx="2" fill="#2c0f05"/>
+            </svg>
+            <div style={{textAlign:'center',padding:'0 8px'}}>
+              <div className="main">FW WALKAWAY</div>
+              <div className="sub">Prop Tracker · Money Machine · Let It Print</div>
+            </div>
+            <svg width="36" height="50" viewBox="0 0 36 50" fill="none">
+              <ellipse cx="18" cy="13" rx="9" ry="9.5" fill="#1a0800"/>
+              <path d="M10 10 Q12 2 18 2 Q24 2 26 10" fill="#0a0300" stroke="#0a0300" strokeWidth="1"/>
+              <line x1="14" y1="2" x2="12" y2="38" stroke="#0a0300" strokeWidth="1.5"/>
+              <line x1="18" y1="1" x2="16" y2="38" stroke="#0a0300" strokeWidth="1.5"/>
+              <line x1="22" y1="2" x2="22" y2="38" stroke="#0a0300" strokeWidth="1.5"/>
+              <ellipse cx="18" cy="13" rx="9" ry="9.5" fill="#1a0800"/>
+              <ellipse cx="18" cy="32" rx="11" ry="14" fill="#4a1a08"/>
+              <rect x="11" y="27" width="14" height="20" rx="3" fill="#8B0000"/>
+              <circle cx="15" cy="12" r="1.2" fill="#0a0300"/>
+              <circle cx="21" cy="12" r="1.2" fill="#0a0300"/>
+              <path d="M15 16.5 Q18 18.5 21 16.5" stroke="#0a0300" strokeWidth="1" fill="none"/>
+              <ellipse cx="14.5" cy="12.5" r=".5" fill="#fff"/>
+              <ellipse cx="20.5" cy="12.5" r=".5" fill="#fff"/>
+            </svg>
+            <svg width="38" height="48" viewBox="0 0 38 48" fill="none">
+              <ellipse cx="19" cy="13" rx="9" ry="9.5" fill="#3a1505"/>
+              <path d="M10 13 Q10 5 19 4 Q28 5 28 13 Q28 8 19 8 Q10 8 10 13Z" fill="#1a0800"/>
+              <ellipse cx="19" cy="32" rx="12" ry="14" fill="#5a2510"/>
+              <rect x="12" y="27" width="14" height="20" rx="2" fill="#1a1a2e"/>
+              <path d="M19 27 L16 32 L19 30 L22 32 Z" fill="#fff"/>
+              <rect x="18" y="30" width="2" height="10" fill="#1a1a2e"/>
+              <ellipse cx="19" cy="13" rx="9" ry="9.5" fill="#3a1505"/>
+              <circle cx="16" cy="12" r="1.2" fill="#1a0800"/>
+              <circle cx="22" cy="12" r="1.2" fill="#1a0800"/>
+              <path d="M16 16.5 Q19 18.5 22 16.5" stroke="#1a0800" strokeWidth="1" fill="none"/>
+              <ellipse cx="15.5" cy="12.5" r=".5" fill="#fff"/>
+              <ellipse cx="21.5" cy="12.5" r=".5" fill="#fff"/>
+            </svg>
+          </div>
+        </div>
+
+        <div className="hd-machine" style={{flexDirection:'row-reverse'}}>
+          <div className="gear-wrap">
+            <div className="g-big"><GearSVG size={34} color="#00c96a"/></div>
+            <div className="g-sm"><GearSVG size={21} color="#f0b000"/></div>
+          </div>
+          <div className="printer-box">
+            <div className="printer-screen">$$$</div>
+            <div className="printer-lights">
+              <div className="plight r"/><div className="plight y"/><div className="plight g"/>
+            </div>
+            <div className="printer-slot"/>
+            <div className="bill-out bill-out2">$$$</div>
+          </div>
+          <div className="gear-wrap">
+            <div className="g-big"><GearSVG size={28} color="#f0b000"/></div>
+            <div className="g-sm"><GearSVG size={18} color="#00c96a"/></div>
+          </div>
+        </div>
+      </div>
+
+      <div className="header-ticker">
+        <div className="ticker-txt">
+          📈 MNQ · MES · MGC · MYM · MICRO FUTURES · TOLD YALL · FW WALKAWAY · PROTECT THE POOL · LET IT PRINT · PUT SOME RESPECT ON MY NAME · RISK MANAGED · STAY DISCIPLINED · COMPOUND THE GAINS · 📈 
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function WeeklyChart({trades}){
+  const weeks = useMemo(()=>{
+    if(!trades.length) return [];
+    const byWeek={};
+    trades.forEach(t=>{
+      const d=new Date(t.id);
+      const jan1=new Date(d.getFullYear(),0,1);
+      const wk=Math.ceil(((d-jan1)/86400000+jan1.getDay()+1)/7);
+      const key=`W${wk}`;
+      byWeek[key]=(byWeek[key]||0)+t.pnl;
+    });
+    return Object.entries(byWeek).map(([k,v])=>({week:k,pnl:v})).slice(-8);
+  },[trades]);
+
+  if(!weeks.length) return(
+    <div className="dark-card" style={{padding:'24px 20px',textAlign:'center'}}>
+      <div style={{fontSize:'32px',marginBottom:'8px'}}>📈</div>
+      <div style={{fontSize:'10px',color:'var(--text3)',letterSpacing:'2px',textTransform:'uppercase'}}>Log trades to see weekly P&L chart</div>
+    </div>
+  );
+
+  const maxVal=Math.max(...weeks.map(w=>Math.abs(w.pnl)),1);
+  const chartH=130,barW=44,gap=62;
+  const total=weeks.reduce((s,w)=>s+w.pnl,0);
+
+  return(
+    <div className="dark-card" style={{padding:'16px 20px'}}>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'14px'}}>
+        <div style={{fontSize:'8px',letterSpacing:'3px',color:'var(--text2)',textTransform:'uppercase'}}>📈 Weekly P&L</div>
+        <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:'18px',color:total>=0?'var(--green)':'var(--red)',letterSpacing:'1px',textShadow:total>=0?'0 0 12px #00c96a55':'0 0 12px #f0406055'}}>
+          {total>=0?'+':''}${Math.abs(total).toFixed(0)} total
+        </div>
+      </div>
+      <div style={{overflowX:'auto'}}>
+        <svg width={Math.max(320,weeks.length*gap+20)} height={chartH+48} style={{display:'block'}}>
+          {[0,.25,.5,.75,1].map(p=>(
+            <line key={p} x1="0" y1={chartH-12-(p*(chartH-30))} x2={weeks.length*gap+20} y2={chartH-12-(p*(chartH-30))} stroke="#1e3050" strokeWidth=".5" strokeDasharray="4,4"/>
+          ))}
+          {weeks.map((w,i)=>{
+            const barH=Math.max(6,(Math.abs(w.pnl)/maxVal)*(chartH-28));
+            const isPos=w.pnl>=0;
+            const x=i*gap+8,baseline=chartH-12,y=isPos?baseline-barH:baseline;
+            return(
+              <g key={i}>
+                <rect x={x+2} y={y+2} width={barW} height={barH} rx="5" fill={isPos?'#00c96a22':'#f0406022'}/>
+                <rect x={x} y={y} width={barW} height={barH} rx="5" fill={isPos?'#00c96a':'#f04060'} opacity=".9"/>
+                <rect x={x} y={isPos?y:y+barH-5} width={barW} height={5} rx="3" fill={isPos?'#00ff84':'#ff7090'} opacity=".5"/>
+                <text x={x+barW/2} y={isPos?y-6:y+barH+14} textAnchor="middle"
+                  fontSize="9" fill={isPos?'#00c96a':'#f04060'}
+                  fontFamily="'DM Mono',monospace" fontWeight="500">
+                  {isPos?'+':''}{Math.abs(w.pnl)>=1000?`${(w.pnl/1000).toFixed(1)}k`:w.pnl.toFixed(0)}
+                </text>
+                <text x={x+barW/2} y={chartH+34} textAnchor="middle"
+                  fontSize="9" fill="#3a5a80"
+                  fontFamily="'DM Mono',monospace">{w.week}</text>
+              </g>
+            );
+          })}
+          <line x1="0" y1={chartH-12} x2={weeks.length*gap+20} y2={chartH-12} stroke="#1e3050" strokeWidth="1.5"/>
+        </svg>
+      </div>
+    </div>
+  );
+}
+
+function TrackerPage(){
+  const [trades,setTrades] = useState([]);
+  const [payouts,setPayouts] = useState([]);
+  const [balance,setBalance] = useState('');
+  const [drawdown,setDrawdown] = useState('');
+  const [instrument,setInstrument] = useState('MNQ');
+  const [form,setForm] = useState({label:'',pnl:'',outcome:'win'});
+  const [payoutForm,setPayoutForm] = useState({label:'',amount:''});
+  const [showPayouts,setShowPayouts] = useState(false);
+  const [lastAdded,setLastAdded] = useState(null);
+  const [showAdvanced,setShowAdvanced] = useState(false);
+
+  // Load from localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem('fwWalkawayData');
+    if (saved) {
+      const data = JSON.parse(saved);
+      setTrades(data.trades || []);
+      setPayouts(data.payouts || []);
+      setBalance(data.balance || '');
+      setDrawdown(data.drawdown || '');
+      setInstrument(data.instrument || 'MNQ');
+    }
+  }, []);
+
+  // Auto-save
+  useEffect(() => {
+    localStorage.setItem('fwWalkawayData', JSON.stringify({
+      trades, payouts, balance, drawdown, instrument
+    }));
+  }, [trades, payouts, balance, drawdown, instrument]);
+
+  const inst = INSTRUMENTS[instrument];
+  const startingDrawdown = parseFloat(drawdown) || 2500;
+
+  const stats = useMemo(() => {
+    const totalPnl = trades.reduce((s,t) => s + t.pnl, 0);
+    const totalPayoutsAmt = payouts.reduce((s,p) => s + p.amount, 0);
+    const currentPool = Math.max(0, startingDrawdown + totalPnl - totalPayoutsAmt);
+    const riskPerTrade = currentPool / DIVISOR;
+    const poolPct = Math.min(100, Math.max(0, ((startingDrawdown + totalPnl) / startingDrawdown) * 100));
+    const wins = trades.filter(t => t.pnl > 0).length;
+    const losses = trades.filter(t => t.pnl < 0).length;
+    const winRate = trades.length ? Math.round((wins / trades.length) * 100) : 0;
+    const isBlownOut = totalPnl <= -startingDrawdown;
+    const remaining = startingDrawdown + totalPnl;
+    const netProfit = totalPnl - totalPayoutsAmt;
+
+    // Advanced metrics
+    const winningTrades = trades.filter(t => t.pnl > 0);
+    const losingTrades = trades.filter(t => t.pnl < 0);
+    const avgWin = winningTrades.length ? winningTrades.reduce((s,t)=>s+t.pnl,0) / winningTrades.length : 0;
+    const avgLoss = losingTrades.length ? Math.abs(losingTrades.reduce((s,t)=>s+t.pnl,0) / losingTrades.length) : 0;
+    const profitFactor = avgLoss ? (winningTrades.reduce((s,t)=>s+t.pnl,0) / Math.abs(losingTrades.reduce((s,t)=>s+t.pnl,0))) : 0;
+    const expectancy = trades.length ? totalPnl / trades.length : 0;
+    const largestWin = winningTrades.length ? Math.max(...winningTrades.map(t=>t.pnl)) : 0;
+    const largestLoss = losingTrades.length ? Math.min(...losingTrades.map(t=>t.pnl)) : 0;
+
+    let winStreak = 0, lossStreak = 0, currentWin = 0, currentLoss = 0;
+    for (let t of [...trades].reverse()) {
+      if (t.pnl > 0) { currentWin++; currentLoss = 0; winStreak = Math.max(winStreak, currentWin); }
+      else { currentLoss++; currentWin = 0; lossStreak = Math.max(lossStreak, currentLoss); }
+    }
+
+    return {
+      totalPnl, totalPayoutsAmt, currentPool, riskPerTrade, poolPct,
+      wins, losses, winRate, isBlownOut, remaining, netProfit,
+      avgWin, avgLoss, profitFactor, expectancy,
+      largestWin, largestLoss, winStreak, lossStreak
+    };
+  }, [trades, payouts, startingDrawdown]);
+
+  const barColor = stats.poolPct >= 60 ? 'var(--green)' : stats.poolPct >= 30 ? 'var(--gold)' : 'var(--red)';
+  const maxContracts = Math.floor(stats.riskPerTrade / (inst.defaultTicks * inst.tickValue));
+  const tableMax = Math.max(maxContracts + 3, 10);
+
+  const addTrade = () => {
+    const v = parseFloat(form.pnl);
+    if (!form.pnl || isNaN(v)) return;
+    const finalPnl = form.outcome === 'win' ? Math.abs(v) : -Math.abs(v);
+    const newId = Date.now();
+    setTrades(prev => [{id:newId, label:form.label || `Trade ${prev.length+1}`, pnl:finalPnl, instrument, time:new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}, ...prev]);
+    setLastAdded(newId);
+    setTimeout(() => setLastAdded(null), 1000);
+    setForm({label:'', pnl:'', outcome:'win'});
+  };
+
+  const removeTrade = id => setTrades(p => p.filter(t => t.id !== id));
+
+  const addPayout = () => {
+    const amt = parseFloat(payoutForm.amount);
+    if (!payoutForm.amount || isNaN(amt) || amt <= 0) return;
+    setPayouts(prev => [{id:Date.now(), label:payoutForm.label || `Payout ${prev.length+1}`, amount:amt, date:new Date().toLocaleDateString([],{month:'short',day:'numeric'}), time:new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}, ...prev]);
+    setPayoutForm({label:'', amount:''});
+  };
+
+  const removePayout = id => setPayouts(p => p.filter(x => x.id !== id));
+
+  const tableRows = [];
+  for(let c = tableMax; c >= 1; c--){
+    const maxTicks = Math.floor(stats.riskPerTrade / (c * inst.tickValue));
+    const isAffordable = (c * inst.defaultTicks * inst.tickValue) <= stats.riskPerTrade;
+    tableRows.push({contracts:c, maxTicks, isAffordable});
+  }
+
+  const inputStyle = {fontSize:'14px', padding:'11px 14px'};
+
+  return(
+    <div className="tracker-wrap">
+
+      {/* Account Settings */}
+      <div className="dark-card" style={{padding:'16px 20px',marginBottom:'12px'}}>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'12px'}}>
+          <div style={{fontSize:'8px',letterSpacing:'3px',color:'var(--text2)',textTransform:'uppercase'}}>⚙️ Account Settings</div>
+          {(balance || drawdown) && (
+            <button onClick={()=>{setTrades([]);setPayouts([]);setBalance('');setDrawdown('');}} 
+              style={{fontSize:'7px',letterSpacing:'2px',color:'var(--text2)',background:'none',border:'1px solid var(--border)',borderRadius:'4px',padding:'4px 10px',cursor:'pointer',fontFamily:"'DM Mono',monospace",textTransform:'uppercase'}}>
+              Reset All
+            </button>
+          )}
+        </div>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'10px'}}>
+          <div className="input-group">
+            <label className="input-label">Account Balance ($)</label>
+            <input className="tinput" type="number" placeholder="e.g. 150000" value={balance} onChange={e=>setBalance(e.target.value)}/>
+          </div>
+          <div className="input-group">
+            <label className="input-label">Max Drawdown ($)</label>
+            <input className="tinput" type="number" placeholder="e.g. 4500" value={drawdown} onChange={e=>setDrawdown(e.target.value)}/>
+          </div>
+        </div>
+        {drawdown && (
+          <div style={{marginTop:'10px',display:'flex',alignItems:'center',gap:'10px',background:'#041408',border:'1px solid #00c96a33',borderRadius:'7px',padding:'10px 16px'}}>
+            <div style={{fontSize:'22px'}}>🖨️</div>
+            <div>
+              <div style={{fontSize:'8px',letterSpacing:'2px',color:'var(--text2)',textTransform:'uppercase'}}>Risk / Trade</div>
+              <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:'24px',color:'var(--green)',letterSpacing:'2px',lineHeight:1,textShadow:'0 0 16px #00c96a55'}}>
+                ${(startingDrawdown/DIVISOR).toFixed(0)}
+              </div>
+            </div>
+            <div style={{marginLeft:'auto',fontSize:'9px',color:'var(--text2)',letterSpacing:'1px'}}>${startingDrawdown.toLocaleString()} ÷ {DIVISOR}</div>
+          </div>
+        )}
+      </div>
+
+      {stats.isBlownOut && <div className="danger-banner">⚠ DRAWDOWN LIMIT REACHED — STOP TRADING</div>}
+
+      {/* Instrument Toggle */}
+      <div style={{display:'flex',background:'#060c1a',border:'1px solid var(--border)',borderRadius:'9px',padding:'4px',marginBottom:'12px',gap:'4px',flexWrap:'wrap'}}>
+        {Object.values(INSTRUMENTS).map(i => (
+          <button key={i.name} onClick={()=>setInstrument(i.name)} style={{
+            flex:1, minWidth:'80px', padding:'11px', border:'none', borderRadius:'7px',
+            background:instrument===i.name ? 'var(--card)' : 'transparent',
+            boxShadow:instrument===i.name ? '0 2px 8px #00000055' : 'none',
+            fontFamily:"'Bebas Neue',sans-serif", fontSize:'17px', letterSpacing:'3px',
+            color:instrument===i.name ? 'var(--green)' : 'var(--text2)',
+            cursor:'pointer', transition:'all .2s'
+          }}>
+            {i.name}
+            <div style={{fontSize:'7px',letterSpacing:'1px',color:instrument===i.name?'var(--text2)':'var(--text3)',fontFamily:"'DM Mono',monospace",marginTop:'2px'}}>{i.label}</div>
+          </button>
+        ))}
+      </div>
+
+      <div className="content-grid">
+
+        {/* Health Bar */}
+        <div className="dark-card health-card full-col">
+          <div className="health-header">
+            <div className="health-label">Account Health</div>
+            <div className="health-pct" style={{color:barColor,textShadow:`0 0 20px ${barColor}66`}}>
+              {stats.isBlownOut ? 'BLOWN' : `${Math.round(stats.poolPct)}%`}
+            </div>
+          </div>
+          <div className="bar-track">
+            <div className="bar-fill" style={{width:`${Math.max(0,stats.poolPct)}%`,background:barColor,boxShadow:`0 0 12px ${barColor}88`}}/>
+          </div>
+          <div className="health-sub">
+            <span>Remaining: ${stats.remaining.toFixed(2)}</span>
+            <span>DD Limit: ${startingDrawdown.toLocaleString()}</span>
+          </div>
+        </div>
+
+        {/* Basic Metrics */}
+        <div className="dark-card metric">
+          <div style={{fontSize:'22px',marginBottom:'5px'}}>📊</div>
+          <div className={`metric-val ${stats.totalPnl>=0?'green':'red'}`} style={{textShadow:stats.totalPnl>=0?'0 0 14px #00c96a55':'0 0 14px #f0406055'}}>
+            {stats.totalPnl>=0?'+':''}{stats.totalPnl.toFixed(0)}
+          </div>
+          <div className="metric-label">Total P&L</div>
+        </div>
+        <div className="dark-card metric">
+          <div style={{fontSize:'22px',marginBottom:'5px'}}>🎯</div>
+          <div className="metric-val" style={{color:'var(--text)'}}>{stats.winRate}%</div>
+          <div className="metric-label">Win Rate</div>
+        </div>
+        <div className="dark-card metric">
+          <div style={{fontSize:'22px',marginBottom:'5px'}}>⚡</div>
+          <div className="metric-val" style={{color:'var(--text)'}}>{trades.length}</div>
+          <div className="metric-label">Trades</div>
+        </div>
+
+        {/* Risk Box */}
+        <div className="dark-card risk-box">
+          <div className="risk-label">Max Risk / Trade</div>
+          <div style={{display:'flex',alignItems:'center',gap:'10px',margin:'4px 0'}}>
+            <span style={{fontSize:'36px'}}>💰</span>
+            <div className="risk-amount">${stats.riskPerTrade.toFixed(0)}</div>
+            <span style={{fontSize:'36px'}}>💰</span>
+          </div>
+          <div className="risk-formula">${stats.currentPool.toFixed(0)} pool ÷ {DIVISOR}</div>
+          <div className="risk-pool-label">Current Pool</div>
+          <div className="risk-pool-val">${stats.currentPool.toFixed(2)}</div>
+          <div style={{fontSize:'10px',color:'var(--text2)',marginTop:6}}>{stats.wins}W · {stats.losses}L</div>
+        </div>
+
+        {/* Weekly Chart */}
+        <div className="full-col">
+          <WeeklyChart trades={trades}/>
+        </div>
+
+        {/* Advanced Stats */}
+        <div className="full-col dark-card" style={{padding:'18px 20px'}}>
+          <div style={{cursor:'pointer', display:'flex', justifyContent:'space-between', alignItems:'center'}} onClick={()=>setShowAdvanced(!showAdvanced)}>
+            <div className="section-lbl" style={{margin:0}}>Advanced Performance Metrics</div>
+            <div style={{fontSize:'18px'}}>{showAdvanced ? '▲' : '▼'}</div>
+          </div>
+          {showAdvanced && (
+            <div style={{marginTop:'16px', display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(130px, 1fr))', gap:'12px'}}>
+              <div style={{textAlign:'center'}}><div style={{fontSize:'22px', color: stats.profitFactor >= 1.5 ? 'var(--green)' : 'var(--red)'}}>{stats.profitFactor.toFixed(2)}</div><div style={{fontSize:'8px',color:'var(--text2)',textTransform:'uppercase'}}>Profit Factor</div></div>
+              <div style={{textAlign:'center'}}><div style={{fontSize:'22px'}}>${stats.expectancy.toFixed(0)}</div><div style={{fontSize:'8px',color:'var(--text2)',textTransform:'uppercase'}}>Expectancy / Trade</div></div>
+              <div style={{textAlign:'center'}}><div style={{fontSize:'22px',color:'var(--green)'}}>${stats.avgWin.toFixed(0)}</div><div style={{fontSize:'8px',color:'var(--text2)',textTransform:'uppercase'}}>Avg Win</div></div>
+              <div style={{textAlign:'center'}}><div style={{fontSize:'22px',color:'var(--red)'}}>${stats.avgLoss.toFixed(0)}</div><div style={{fontSize:'8px',color:'var(--text2)',textTransform:'uppercase'}}>Avg Loss</div></div>
+              <div style={{textAlign:'center'}}><div style={{fontSize:'22px',color:'var(--gold)'}}>${stats.largestWin.toFixed(0)}</div><div style={{fontSize:'8px',color:'var(--text2)',textTransform:'uppercase'}}>Largest Win</div></div>
+              <div style={{textAlign:'center'}}><div style={{fontSize:'22px',color:'var(--red)'}}>${Math.abs(stats.largestLoss).toFixed(0)}</div><div style={{fontSize:'8px',color:'var(--text2)',textTransform:'uppercase'}}>Largest Loss</div></div>
+              <div style={{textAlign:'center'}}><div style={{fontSize:'22px',color:'var(--green)'}}>{stats.winStreak}</div><div style={{fontSize:'8px',color:'var(--text2)',textTransform:'uppercase'}}>Win Streak</div></div>
+              <div style={{textAlign:'center'}}><div style={{fontSize:'22px',color:'var(--red)'}}>{stats.lossStreak}</div><div style={{fontSize:'8px',color:'var(--text2)',textTransform:'uppercase'}}>Loss Streak</div></div>
+            </div>
+          )}
+        </div>
+
+        {/* Bottom Row */}
+        <div className="full-col" style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'12px',alignItems:'start'}}>
+
+          {/* Contracts Table */}
+          <div className="dark-card" style={{padding:'16px 20px'}}>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'12px'}}>
+              <div style={{fontSize:'8px',letterSpacing:'3px',color:'var(--text2)',textTransform:'uppercase'}}>{inst.name} Contracts</div>
+              <div style={{fontSize:'8px',letterSpacing:'2px',color:'var(--text2)',textTransform:'uppercase'}}>1 Tick = ${inst.tickValue.toFixed(2)}</div>
+            </div>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'4px',marginBottom:'6px'}}>
+              {['Contracts','Max Stop Ticks'].map(h=>(
+                <div key={h} style={{fontSize:'7px',letterSpacing:'2px',color:'var(--text3)',textTransform:'uppercase',textAlign:'center',padding:'4px 0'}}>{h}</div>
+              ))}
+            </div>
+            {tableRows.map(({contracts,maxTicks,isAffordable})=>(
+              <div key={contracts} style={{
+                display:'grid',gridTemplateColumns:'1fr 1fr',gap:'4px',marginBottom:'3px',
+                background:isAffordable?'#041a10':'#060c18',
+                border:isAffordable?'1px solid #00c96a33':'1px solid var(--border)',
+                borderRadius:'7px',padding:'9px',opacity:isAffordable?1:.35
+              }}>
+                <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:isAffordable?'22px':'16px',color:isAffordable?'var(--green)':'var(--text3)',textAlign:'center',lineHeight:1}}>{contracts}</div>
+                <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:isAffordable?'22px':'16px',color:isAffordable?'var(--gold)':'var(--text3)',textAlign:'center',lineHeight:1}}>{maxTicks}</div>
+              </div>
+            ))}
+            <div style={{marginTop:'10px',fontSize:'8px',color:'var(--text3)',letterSpacing:'1px',textAlign:'center'}}>
+              count your stop ticks → match to contracts row
+            </div>
+          </div>
+
+          {/* Log Trade + Journal + Payouts */}
+          <div style={{display:'flex',flexDirection:'column',gap:'12px'}}>
+
+            {/* Log Trade */}
+            <div className="dark-card" style={{padding:'16px 20px'}}>
+              <div className="section-lbl">Log Trade</div>
+              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'10px',marginBottom:'10px'}}>
+                <div className="input-group">
+                  <label className="input-label">Label</label>
+                  <input className="tinput" style={inputStyle} placeholder="e.g. Long MNQ" value={form.label} onChange={e=>setForm(f=>({...f,label:e.target.value}))}/>
+                </div>
+                <div className="input-group">
+                  <label className="input-label">Outcome</label>
+                  <select className="tselect" style={inputStyle} value={form.outcome} onChange={e=>setForm(f=>({...f,outcome:e.target.value}))}>
+                    <option value="win">WIN</option>
+                    <option value="loss">LOSS</option>
+                  </select>
+                </div>
+                <div className="input-group" style={{gridColumn:'1/-1'}}>
+                  <label className="input-label">Dollar Amount ($)</label>
+                  <input className="tinput" style={inputStyle} type="number" placeholder="e.g. 350" value={form.pnl}
+                    onChange={e=>setForm(f=>({...f,pnl:e.target.value}))}
+                    onKeyDown={e=>e.key==='Enter'&&addTrade()}/>
+                </div>
+              </div>
+              <button className="add-btn shimmer-btn" onClick={addTrade}>+ LOG TRADE</button>
+            </div>
+
+            {/* Trade Journal */}
+            <div className="dark-card log-section">
+              <div className="log-header">
+                <div className="section-lbl" style={{margin:0}}>Trade Journal</div>
+                {trades.length>0 && <button className="clear-btn" onClick={()=>setTrades([])}>CLEAR ALL</button>}
+              </div>
+              {trades.length===0 ? (
+                <div className="empty-log">No trades yet — let it print 🖨️</div>
+              ) : trades.map((t,i)=>(
+                <div key={t.id} className={lastAdded===t.id ? (t.pnl>=0?'win-row-anim':'loss-row-anim') : ''}
+                  style={{display:'grid',gridTemplateColumns:'32px 1fr auto auto',gap:'12px',alignItems:'center',padding:'14px 20px',borderBottom:i<trades.length-1?'1px solid var(--border)':'none'}}>
+                  <div style={{fontSize:'10px',color:'var(--text2)',textAlign:'center'}}>{trades.length-i}</div>
+                  <div>
+                    <div style={{fontSize:'14px',color:'var(--text)',marginBottom:'3px'}}>{t.label}</div>
+                    <div style={{fontSize:'10px',color:'var(--text2)',letterSpacing:'1px'}}>{t.time} · {t.instrument}</div>
+                  </div>
+                  <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:'20px',letterSpacing:'1px',textAlign:'right',color:t.pnl>=0?'var(--green)':'var(--red)',textShadow:t.pnl>=0?'0 0 10px #00c96a55':'0 0 10px #f0406055'}}>
+                    {t.pnl>=0?'+':''}${Math.abs(t.pnl).toFixed(0)}
+                  </div>
+                  <button className="trade-del" onClick={()=>removeTrade(t.id)}>✕</button>
+                </div>
+              ))}
+            </div>
+
+            {/* Payouts */}
+            <div className="dark-card log-section">
+              <div className="log-header" style={{cursor:'pointer'}} onClick={()=>setShowPayouts(v=>!v)}>
+                <div style={{display:'flex',alignItems:'center',gap:'12px'}}>
+                  <div className="section-lbl" style={{margin:0}}>Payouts</div>
+                  {payouts.length>0 && (
+                    <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:'18px',color:'var(--gold)',letterSpacing:'1px',textShadow:'0 0 10px #f0b00055'}}>
+                      ${payouts.reduce((s,p)=>s+p.amount,0).toFixed(0)} total
+                    </div>
+                  )}
+                </div>
+                <div style={{color:'var(--text2)',fontSize:'16px',transition:'transform .2s',transform:showPayouts?'rotate(180deg)':'rotate(0deg)'}}>▾</div>
+              </div>
+
+              {showPayouts && (
+                <div style={{padding:'16px 20px'}}>
+                  <div style={{marginBottom:'14px'}}>
+                    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'10px',marginBottom:'10px'}}>
+                      <div className="input-group">
+                        <label className="input-label">Label</label>
+                        <input className="tinput" style={inputStyle} placeholder="e.g. Weekly payout" value={payoutForm.label} onChange={e=>setPayoutForm(f=>({...f,label:e.target.value}))}/>
+                      </div>
+                      <div className="input-group">
+                        <label className="input-label">Amount ($)</label>
+                        <input className="tinput" style={inputStyle} type="number" placeholder="e.g. 500" value={payoutForm.amount}
+                          onChange={e=>setPayoutForm(f=>({...f,amount:e.target.value}))}
+                          onKeyDown={e=>e.key==='Enter'&&addPayout()}/>
+                      </div>
+                    </div>
+                    <button className="add-btn payout-shimmer" onClick={addPayout}>+ LOG PAYOUT</button>
+                  </div>
+                  {payouts.length===0 ? (
+                    <div className="empty-log" style={{padding:'16px 0 4px'}}>No payouts logged yet</div>
+                  ) : (
+                    <div>
+                      {payouts.map((p,i)=>(
+                        <div key={p.id} style={{display:'grid',gridTemplateColumns:'32px 1fr auto auto',gap:'12px',alignItems:'center',padding:'13px 0',borderBottom:i<payouts.length-1?'1px solid var(--border)':'none'}}>
+                          <div style={{fontSize:'10px',color:'var(--text2)',textAlign:'center'}}>{payouts.length-i}</div>
+                          <div>
+                            <div style={{fontSize:'14px',color:'var(--text)',marginBottom:'3px'}}>{p.label}</div>
+                            <div style={{fontSize:'10px',color:'var(--text2)',letterSpacing:'1px'}}>{p.date} · {p.time}</div>
+                          </div>
+                          <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:'20px',color:'var(--gold)',letterSpacing:'1px',textAlign:'right',textShadow:'0 0 10px #f0b00055'}}>+${p.amount.toFixed(0)}</div>
+                          <button className="trade-del" onClick={()=>removePayout(p.id)}>✕</button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function App(){
+  return(
+    <div>
+      <MoneyMachineHeader/>
+      <TrackerPage/>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>
