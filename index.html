@@ -1296,12 +1296,13 @@ function FirmPage({ firm, data, onUpdate, firms, firmData }) {
   const drawdown = data.drawdown || '';
   const inst = INSTRUMENTS[instrument];
   const startingDrawdown = parseFloat(drawdown) || 2500;
+  const firmDivisor = data.divisor || 7;
 
   const stats = useMemo(() => {
     const totalPnl = trades.reduce((s,t) => s+t.pnl, 0);
     const totalPayoutsAmt = payouts.reduce((s,p) => s+p.amount, 0);
     const currentPool = Math.max(0, startingDrawdown + totalPnl - totalPayoutsAmt);
-    const riskPerTrade = currentPool / DIVISOR;
+    const riskPerTrade = currentPool / firmDivisor;
     const poolPct = Math.min(100, Math.max(0, ((startingDrawdown+totalPnl)/startingDrawdown)*100));
     const wins = trades.filter(t=>t.pnl>0).length;
     const losses = trades.filter(t=>t.pnl<0).length;
@@ -1320,7 +1321,7 @@ function FirmPage({ firm, data, onUpdate, firms, firmData }) {
     let winStreak=0,lossStreak=0,cw=0,cl=0;
     for(const t of [...trades].reverse()){if(t.pnl>0){cw++;cl=0;winStreak=Math.max(winStreak,cw);}else{cl++;cw=0;lossStreak=Math.max(lossStreak,cl);}}
     return{totalPnl,totalPayoutsAmt,currentPool,riskPerTrade,poolPct,wins,losses,winRate,isBlownOut,remaining,netProfit,avgWin,avgLoss,profitFactor,expectancy,largestWin,largestLoss,winStreak,lossStreak};
-  },[trades,payouts,startingDrawdown]);
+  },[trades,payouts,startingDrawdown,firmDivisor]);
 
   const barColor = stats.poolPct>=60?'var(--green)':stats.poolPct>=30?'var(--gold)':'var(--red)';
   const maxContracts = Math.floor(stats.riskPerTrade/(inst.defaultTicks*inst.tickValue));
@@ -1391,10 +1392,10 @@ function FirmPage({ firm, data, onUpdate, firms, firmData }) {
             <div>
               <div style={{fontSize:'8px',letterSpacing:'2px',color:'var(--text2)',textTransform:'uppercase'}}>Risk / Trade</div>
               <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:'24px',color:fc,letterSpacing:'2px',lineHeight:1,textShadow:`0 0 16px ${fc}55`}}>
-                ${(startingDrawdown/DIVISOR).toFixed(0)}
+                ${(startingDrawdown/firmDivisor).toFixed(0)}
               </div>
             </div>
-            <div style={{marginLeft:'auto',fontSize:'9px',color:'var(--text2)',letterSpacing:'1px'}}>${startingDrawdown.toLocaleString()} ÷ {DIVISOR}</div>
+            <div style={{marginLeft:'auto',fontSize:'9px',color:'var(--text2)',letterSpacing:'1px'}}>${startingDrawdown.toLocaleString()} ÷ {firmDivisor}</div>
           </div>
         )}
       </div>
@@ -1451,12 +1452,35 @@ function FirmPage({ firm, data, onUpdate, firms, firmData }) {
           {/* Risk Box with embedded metrics */}
           <div className="dark-card risk-box" style={{borderColor:`${fc}33`}}>
             <div className="risk-label">Max Risk / Trade</div>
+
+            {/* Risk mode selector */}
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:'5px',width:'100%',marginBottom:'10px'}}>
+              {[
+                {label:'Conservative',d:7,color:'#00c96a',desc:'÷7'},
+                {label:'Moderate',d:5,color:'#f0b000',desc:'÷5'},
+                {label:'Aggressive',d:3,color:'#f04060',desc:'÷3'},
+              ].map(({label,d,color,desc})=>{
+                const active = firmDivisor===d;
+                return(
+                  <button key={d} onClick={()=>onUpdate({...data,divisor:d})} style={{
+                    padding:'7px 4px',borderRadius:'7px',cursor:'pointer',
+                    background: active ? `${color}22` : '#0a1525',
+                    border: active ? `1px solid ${color}88` : '1px solid var(--border)',
+                    transition:'all .2s',
+                  }}>
+                    <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:'15px',letterSpacing:'1px',color:active?color:'var(--text3)',lineHeight:1}}>{desc}</div>
+                    <div style={{fontSize:'7px',letterSpacing:'1px',color:active?color:'var(--text3)',textTransform:'uppercase',marginTop:'3px',lineHeight:1}}>{label}</div>
+                  </button>
+                );
+              })}
+            </div>
+
             <div style={{display:'flex',alignItems:'center',gap:'10px',margin:'4px 0'}}>
               <span style={{fontSize:'36px'}}>💰</span>
               <div className="risk-amount" style={{color:fc,textShadow:`0 0 24px ${fc}55`}}>${stats.riskPerTrade.toFixed(0)}</div>
               <span style={{fontSize:'36px'}}>💰</span>
             </div>
-            <div className="risk-formula">${stats.currentPool.toFixed(0)} pool ÷ {DIVISOR}</div>
+            <div className="risk-formula">${stats.currentPool.toFixed(0)} pool ÷ {firmDivisor}</div>
             <div className="risk-pool-label">Current Pool</div>
             <div className="risk-pool-val">${stats.currentPool.toFixed(2)}</div>
             <div style={{fontSize:'10px',color:'var(--text2)',marginTop:6}}>{stats.wins}W · {stats.losses}L</div>
@@ -1656,9 +1680,9 @@ function SettingsPage({ firms, setFirms, balance, setBalance, drawdown, setDrawd
             <div style={{fontSize:'22px'}}>🖨️</div>
             <div>
               <div style={{fontSize:'8px',letterSpacing:'2px',color:'var(--text2)',textTransform:'uppercase'}}>Risk / Trade</div>
-              <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:'24px',color:'var(--green)',letterSpacing:'2px',lineHeight:1}}>${(parseFloat(drawdown)/DIVISOR).toFixed(0)}</div>
+              <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:'24px',color:'var(--green)',letterSpacing:'2px',lineHeight:1}}>${(parseFloat(drawdown)/7).toFixed(0)}</div>
             </div>
-            <div style={{marginLeft:'auto',fontSize:'9px',color:'var(--text2)'}}>${parseFloat(drawdown).toLocaleString()} ÷ {DIVISOR}</div>
+            <div style={{marginLeft:'auto',fontSize:'9px',color:'var(--text2)'}}>${parseFloat(drawdown).toLocaleString()} ÷ 7 (default)</div>
           </div>
         )}
       </div>
