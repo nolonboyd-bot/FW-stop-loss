@@ -1412,6 +1412,10 @@ function FirmPage({ firm, data, onUpdate, firms, firmData }) {
           <button onClick={()=>setShowImport(!showImport)} style={{background:showImport?`${fc}22`:'transparent',border:`1px solid ${fc}44`,borderRadius:'6px',padding:'7px 14px',color:fc,fontSize:'10px',letterSpacing:'2px',cursor:'pointer',fontFamily:"'DM Mono',monospace",textTransform:'uppercase'}}>
             {showImport?'✕ Close':'📂 Import CSV'}
           </button>
+          <button onClick={()=>{ if(window.confirm(`Reset ALL data for ${firm.name}? This clears trades, payouts and resets P&L to zero.`)) onUpdate({...data,trades:[],payouts:[]}); }}
+            style={{background:'transparent',border:'1px solid #f0406044',borderRadius:'6px',padding:'7px 14px',color:'#f04060',fontSize:'10px',letterSpacing:'2px',cursor:'pointer',fontFamily:"'DM Mono',monospace",textTransform:'uppercase'}}>
+            🔄 Reset
+          </button>
         </div>
       </div>
 
