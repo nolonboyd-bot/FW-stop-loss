@@ -48,7 +48,7 @@ html,body{background:var(--bg);font-family:'DM Mono',monospace;color:var(--text)
 .machine-header::after{content:'';position:absolute;top:0;left:0;right:0;bottom:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,#00c96a04 2px,#00c96a04 4px);pointer-events:none;}
 .scan-line{position:absolute;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,#00c96a44,transparent);animation:scanLine 3s linear infinite;pointer-events:none;z-index:3;}
 .header-ticker{position:absolute;bottom:0;left:0;right:0;height:20px;background:#00c96a;overflow:hidden;display:flex;align-items:center;}
-.ticker-txt{white-space:nowrap;font-size:9px;letter-spacing:2px;color:#000;font-family:'Bebas Neue',sans-serif;animation:ticker 22s linear infinite;padding-right:80px;}
+.ticker-txt{white-space:nowrap;font-size:9px;letter-spacing:2px;color:#000;font-family:'Bebas Neue',sans-serif;animation:ticker 90s linear infinite;padding-right:80px;}
 .hd-body{display:flex;align-items:center;justify-content:space-between;position:relative;z-index:2;padding-bottom:22px;}
 .hd-machine{display:flex;align-items:center;gap:12px;}
 .gear-wrap{position:relative;width:50px;height:50px;flex-shrink:0;}
@@ -1330,7 +1330,11 @@ function FirmPage({ firm, data, onUpdate, firms, firmData }) {
 
   const barColor = stats.poolPct>=60?'var(--green)':stats.poolPct>=30?'var(--gold)':'var(--red)';
   const maxContracts = Math.floor(stats.riskPerTrade/(inst.defaultTicks*inst.tickValue));
-  const tableMax = Math.max(maxContracts+3,10);
+  const isMicro = inst.size === 'micro';
+  const userMaxContracts = isMicro
+    ? (parseInt(data.maxMicroContracts) || 0)
+    : (parseInt(data.maxMiniContracts) || 0);
+  const tableMax = userMaxContracts > 0 ? userMaxContracts : Math.max(maxContracts+3, isMicro ? 30 : 10);
   const tableRows=[];
   for(let c=tableMax;c>=1;c--){
     const maxTicks=Math.floor(stats.riskPerTrade/(c*inst.tickValue));
@@ -1379,16 +1383,22 @@ function FirmPage({ firm, data, onUpdate, firms, firmData }) {
         </div>
         <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'10px'}}>
           <div className="input-group">
-            <label className="input-label">Account Balance ($)</label>
-            <input className="tinput" type="number" placeholder="e.g. 150000"
-              value={balance}
-              onChange={e=>onUpdate({...data,balance:e.target.value})}/>
-          </div>
-          <div className="input-group">
             <label className="input-label">Max Drawdown ($)</label>
-            <input className="tinput" type="number" placeholder="e.g. 4500"
+            <input className="tinput" type="number" placeholder="e.g. 2500"
               value={drawdown}
               onChange={e=>onUpdate({...data,drawdown:e.target.value})}/>
+          </div>
+          <div className="input-group">
+            <label className="input-label">Max Micro Contracts</label>
+            <input className="tinput" type="number" placeholder="e.g. 30"
+              value={data.maxMicroContracts||''}
+              onChange={e=>onUpdate({...data,maxMicroContracts:e.target.value})}/>
+          </div>
+          <div className="input-group">
+            <label className="input-label">Max Mini Contracts</label>
+            <input className="tinput" type="number" placeholder="e.g. 5"
+              value={data.maxMiniContracts||''}
+              onChange={e=>onUpdate({...data,maxMiniContracts:e.target.value})}/>
           </div>
         </div>
         {drawdown&&(
@@ -1401,6 +1411,8 @@ function FirmPage({ firm, data, onUpdate, firms, firmData }) {
               </div>
             </div>
             <div style={{marginLeft:'auto',fontSize:'9px',color:'var(--text2)',letterSpacing:'1px'}}>${startingDrawdown.toLocaleString()} ÷ {firmDivisor}</div>
+            {data.maxMicroContracts && isMicro && <div style={{fontSize:'9px',color:fc,letterSpacing:'1px',borderLeft:'1px solid var(--border)',paddingLeft:'12px',marginLeft:'4px'}}>Max {data.maxMicroContracts} micros</div>}
+            {data.maxMiniContracts && !isMicro && <div style={{fontSize:'9px',color:fc,letterSpacing:'1px',borderLeft:'1px solid var(--border)',paddingLeft:'12px',marginLeft:'4px'}}>Max {data.maxMiniContracts} minis</div>}
           </div>
         )}
       </div>
@@ -1568,7 +1580,10 @@ function FirmPage({ firm, data, onUpdate, firms, firmData }) {
           <div className="dark-card" style={{padding:'16px 20px'}}>
             <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'12px'}}>
               <div style={{fontSize:'8px',letterSpacing:'3px',color:'var(--text2)',textTransform:'uppercase'}}>{inst.name} Contracts</div>
-              <div style={{fontSize:'8px',letterSpacing:'2px',color:'var(--text2)',textTransform:'uppercase'}}>1 Tick = ${inst.tickValue.toFixed(2)}</div>
+              <div style={{display:'flex',gap:'10px',alignItems:'center'}}>
+                {userMaxContracts > 0 && <div style={{fontSize:'8px',letterSpacing:'1px',color:fc}}>Max: {userMaxContracts} {isMicro?'micros':'minis'}</div>}
+                <div style={{fontSize:'8px',letterSpacing:'2px',color:'var(--text2)',textTransform:'uppercase'}}>1 Tick = ${inst.tickValue.toFixed(2)}</div>
+              </div>
             </div>
             <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'4px',marginBottom:'6px'}}>
               {['Contracts','Max Stop Ticks'].map(h=>(
